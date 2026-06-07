@@ -22,7 +22,7 @@ async def get_file_summary(session: Session, file_path: str, content: str) -> di
     system_prompt = "You are a senior developer. Explain what this code does in exactly 3 simple sentences. Focus on its core responsibility."
     user_prompt = f"[File Path: {file_path}]\n\n{content}"
     
-    model_name = os.getenv("LITELLM_MODEL", "gemini/gemini-1.5-flash-latest")
+    model_name = os.getenv("LITELLM_MODEL", "gemini/gemini-3.5-flash")
     
     try:
         if not os.getenv("GEMINI_API_KEY") and not os.getenv("OPENAI_API_KEY"):

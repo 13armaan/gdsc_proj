@@ -27,8 +27,9 @@ async def scan_repository(request: ScanRequest):
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
+                nodes[-1].loc = len(content.splitlines())
         except Exception:
-            continue
+            pass
             
         _, ext = os.path.splitext(file_path)
         parser = ParserFactory.get_parser(ext)

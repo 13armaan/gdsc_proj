@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { type Node, type Edge, applyNodeChanges, applyEdgeChanges, type NodeChange, type EdgeChange } from 'reactflow';
+import { type Node, type Edge, applyNodeChanges, applyEdgeChanges, type NodeChange, type EdgeChange, MarkerType } from 'reactflow';
 import axios from 'axios';
 import { getLayoutedElements } from '../utils/layout';
 
@@ -21,6 +21,7 @@ interface GraphStore {
   setScanTarget: (path: string) => void;
   fetchGraph: () => Promise<void>;
   fetchSummary: (filePath: string) => Promise<void>;
+  clearSelection: () => void;
   
   onNodesChange: (changes: any) => void;
   onEdgesChange: (changes: any) => void;
@@ -37,6 +38,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   scanError: null,
 
   setScanTarget: (path) => set({ scanTarget: path }),
+  clearSelection: () => set({ selectedNode: null, summaryData: null }),
 
   onNodesChange: (changes: NodeChange[]) => {
     set({
@@ -63,8 +65,12 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       
       const formattedNodes: Node[] = response.data.nodes.map((n: any) => ({
         id: n.id,
-        type: 'fileNode',
-        data: { label: n.label },
+        type: n.type || 'file',
+        data: { 
+          label: n.label,
+          type: n.label.split('.').pop() || 'unknown',
+          loc: n.loc
+        },
         position: { x: 0, y: 0 } // initial position before layout
       }));
       
@@ -73,7 +79,8 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         source: e.source,
         target: e.target,
         animated: true,
-        style: { stroke: '#94a3b8', strokeWidth: 2 }
+        style: { stroke: '#64748b', strokeWidth: 2 },
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' }
       }));
 
       const layouted = getLayoutedElements(formattedNodes, formattedEdges, 'TB');

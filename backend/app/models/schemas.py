@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 class ScanRequest(BaseModel):
     target_path: str
@@ -8,6 +8,7 @@ class Node(BaseModel):
     id: str
     label: str
     type: str
+    loc: Optional[int] = None
 
 class Edge(BaseModel):
     id: str
