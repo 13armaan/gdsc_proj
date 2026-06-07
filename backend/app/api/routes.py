@@ -35,9 +35,20 @@ async def scan_repository(request: ScanRequest):
         if parser:
             dependencies = parser.extract_dependencies(file_path, content)
             for dep in dependencies:
-                # The prompt specifies: Edge.source is the dependent file, Edge.target is the imported file.
-                edge_id = f"{file_path}-{dep}"
-                edges.append(Edge(id=edge_id, source=file_path, target=dep))
+                # Resolve module name (e.g. 'app.models.schemas') to file path suffix
+                dep_path_unix = dep.replace(".", "/") + ".py"
+                dep_path_win = dep.replace(".", "\\") + ".py"
+                
+                target_file_path = None
+                for p in file_paths:
+                    if p.endswith(dep_path_unix) or p.endswith(dep_path_win):
+                        target_file_path = p
+                        break
+                
+                if target_file_path:
+                    # Edge.source is the dependent file, Edge.target is the imported file.
+                    edge_id = f"{file_path}-{target_file_path}"
+                    edges.append(Edge(id=edge_id, source=file_path, target=target_file_path))
                 
     return ScanResponse(nodes=nodes, edges=edges)
 
