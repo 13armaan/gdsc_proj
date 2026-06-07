@@ -1,12 +1,12 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import ReactFlow, {
   Background,
   Controls,
   useNodesState,
   useEdgesState,
   addEdge,
-  Connection,
-  Edge
+  type Connection,
+  type Edge
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -24,9 +24,9 @@ function App() {
   const onConnect = useCallback((params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
 
   return (
-    <div className="h-screen w-screen flex overflow-hidden bg-white">
+    <div className="h-screen w-screen flex overflow-hidden bg-white" style={{ width: '100vw', height: '100vh', display: 'flex', backgroundColor: 'white' }}>
       {/* Main Canvas Area */}
-      <div className="flex-1 h-full relative">
+      <div className="flex-1 h-full relative" style={{ flex: 1, height: '100%', position: 'relative' }}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -41,7 +41,7 @@ function App() {
       </div>
 
       {/* Sidebar Panel */}
-      <div className="w-80 h-full border-l border-gray-200 bg-gray-50 flex flex-col p-4 shadow-sm z-10 relative">
+      <div className="w-80 h-full border-l border-gray-200 bg-gray-50 flex flex-col p-4 shadow-sm z-10 relative" style={{ width: '20rem', height: '100%', borderLeft: '1px solid #e5e7eb', backgroundColor: '#f9fafb', display: 'flex', flexDirection: 'column', padding: '1rem' }}>
         <h1 className="text-xl font-bold text-gray-800 mb-4">Repomap Analyzer</h1>
         <p className="text-sm text-gray-600 mb-4">Scan and visualize your codebase architecture here.</p>
         
