@@ -24,6 +24,7 @@ interface GraphState {
   scanTarget: string;
   selectedNode: string | null;
   summaryData: any | null;
+  statistics: any | null;
   isLoading: boolean;
   isSummaryLoading: boolean;
   scanError: string | null;
@@ -37,8 +38,10 @@ interface GraphState {
   expandAllFolders: () => Promise<void>;
   collapseAllFolders: () => Promise<void>;
   isAnalyticsOpen: boolean;
+  isStatsModalOpen: boolean;
   highlightViolations: boolean;
   toggleAnalytics: () => void;
+  toggleStatsModal: () => void;
   toggleViolations: () => void;
 }
 
@@ -57,15 +60,18 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   monolithicComponents: [],
   collapsedFolders: new Set<string>(),
   isAnalyticsOpen: false,
+  isStatsModalOpen: false,
   highlightViolations: false,
   scanTarget: '',
   selectedNode: null,
   summaryData: null,
+  statistics: null,
   isLoading: false,
   isSummaryLoading: false,
   scanError: null,
 
   toggleAnalytics: () => set((state) => ({ isAnalyticsOpen: !state.isAnalyticsOpen })),
+  toggleStatsModal: () => set((state) => ({ isStatsModalOpen: !state.isStatsModalOpen })),
   
   toggleViolations: () => {
     const { highlightViolations, edges, circularImports, layers, violations } = get();
@@ -145,6 +151,7 @@ export const useGraphStore = create<GraphState>((set, get) => ({
       const couplingMetrics = response.data.coupling_metrics || {};
       const violations = response.data.violations || [];
       const monolithicComponents = response.data.monolithic_components || [];
+      const statistics = response.data.statistics || null;
 
       const folderMap = new Map<string, number>();
       incomingNodes.forEach((n: any) => {
@@ -227,6 +234,7 @@ export const useGraphStore = create<GraphState>((set, get) => ({
         couplingMetrics,
         violations,
         monolithicComponents,
+        statistics,
         collapsedFolders: defaultCollapsed, 
         highlightViolations: false,
         isLoading: false 

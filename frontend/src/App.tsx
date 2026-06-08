@@ -8,12 +8,13 @@ import ReactFlow, {
   useReactFlow
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Search, Loader2, FolderSearch, AlertCircle, Waypoints, ChevronUp, ChevronDown, Maximize2, Minimize2, BarChart2 } from 'lucide-react';
+import { Search, Loader2, FolderSearch, AlertCircle, Waypoints, ChevronUp, ChevronDown, Maximize2, Minimize2, BarChart2, LayoutDashboard } from 'lucide-react';
 import { useGraphStore } from './store/useGraphStore';
 import FileNode from './components/FileNode';
 import FolderNode from './components/FolderNode';
 import Sidebar from './components/Sidebar';
 import AnalyticsPanel from './components/AnalyticsPanel';
+import StatisticsModal from './components/StatisticsModal';
 
 const nodeTypes = {
   file: FileNode,
@@ -36,7 +37,9 @@ const AppContent = () => {
     expandAllFolders,
     collapseAllFolders,
     isAnalyticsOpen,
-    toggleAnalytics
+    toggleAnalytics,
+    isStatsModalOpen,
+    toggleStatsModal
   } = useGraphStore();
 
   const { fitView, setCenter } = useReactFlow();
@@ -105,7 +108,7 @@ const AppContent = () => {
       
       {/* Dedicated Header Bar */}
       <header className="w-full bg-slate-800/95 border-b border-slate-700/80 px-6 py-3 flex items-center justify-between z-50 shadow-md flex-shrink-0">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 select-none cursor-default">
           <Waypoints className="w-6 h-6 text-blue-500" />
           <h1 className="font-bold text-lg tracking-wide text-slate-100">RepoMap<span className="text-blue-500">Analyzer</span></h1>
         </div>
@@ -146,6 +149,10 @@ const AppContent = () => {
                 <button onClick={toggleAnalytics} className={`px-3 py-1.5 rounded-lg border flex items-center gap-1.5 text-xs font-medium transition-all duration-200 ${isAnalyticsOpen ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-slate-800 hover:bg-slate-700 border-slate-700/50 text-slate-300'}`} title="View Insights">
                   <BarChart2 className="w-3.5 h-3.5" />
                   Insights
+                </button>
+                <button onClick={toggleStatsModal} className={`px-3 py-1.5 rounded-lg border flex items-center gap-1.5 text-xs font-medium transition-all duration-200 ${isStatsModalOpen ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/20' : 'bg-slate-800 hover:bg-slate-700 border-slate-700/50 text-slate-300'}`} title="View Dashboard">
+                  <LayoutDashboard className="w-3.5 h-3.5" />
+                  Dashboard
                 </button>
               </div>
 
@@ -201,7 +208,7 @@ const AppContent = () => {
           </div>
         ) : nodes.length === 0 && !isLoading ? (
           <div className="absolute inset-0 z-40 flex flex-col items-center justify-center pointer-events-none">
-            <div className="flex flex-col items-center text-center opacity-60">
+            <div className="flex flex-col items-center text-center opacity-60 select-none cursor-default pointer-events-auto">
               <Waypoints className="w-24 h-24 text-slate-500 mb-6" strokeWidth={1.5} />
               <h2 className="text-2xl font-medium text-slate-300 mb-3">Ready to map your architecture</h2>
               <p className="text-slate-400 max-w-md text-base leading-relaxed">
@@ -235,6 +242,7 @@ const AppContent = () => {
       </div>
 
       <AnalyticsPanel />
+      <StatisticsModal />
       <Sidebar />
     </div>
   );

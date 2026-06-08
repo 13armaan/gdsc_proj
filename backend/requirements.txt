@@ -5,3 +5,5 @@ pydantic-settings
 pytest
 pytest-asyncio
 litellm
+python-dotenv
+httpx
