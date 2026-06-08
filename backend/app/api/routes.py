@@ -10,6 +10,8 @@ from app.core.database import get_session
 from app.services.graph_analyzer import detect_circular_imports, calculate_node_weights
 from app.services.architecture_analyzer import calculate_coupling_metrics
 from app.services.package_tracker import parse_manifests, analyze_package_usage
+from app.services.metrics_analyzer import calculate_file_metrics, aggregate_statistics
+from app.services.git_analyzer import get_git_metadata
 
 router = APIRouter()
 
@@ -96,6 +98,20 @@ async def scan_repository(request: ScanRequest):
         unused_dependencies = []
         package_stats = {}
                 
+    # Statistics & Git Metadata
+    file_metrics = calculate_file_metrics(file_paths)
+    aggregated_stats = aggregate_statistics(file_metrics)
+    git_metadata = get_git_metadata(request.target_path)
+    
+    codebase_statistics = {
+        "language_distribution": aggregated_stats["language_distribution"],
+        "largest_files": aggregated_stats["top_10_largest_files"],
+        "complex_files": aggregated_stats["top_10_most_complex_files"],
+        "average_file_size_bytes": aggregated_stats["average_file_size"],
+        "contribution_heatmap": git_metadata.get("contribution_heatmap", {}),
+        "growth_history": git_metadata.get("growth_history", {})
+    }
+
     return ScanResponse(
         nodes=nodes, 
         edges=edges,
@@ -106,7 +122,8 @@ async def scan_repository(request: ScanRequest):
         layers=layers,
         coupling_metrics=coupling_metrics,
         violations=violations,
-        monolithic_components=monolithic_components
+        monolithic_components=monolithic_components,
+        statistics=codebase_statistics
     )
 
 @router.post("/api/summary", response_model=SummaryResponse)

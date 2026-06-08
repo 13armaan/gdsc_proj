@@ -66,7 +66,7 @@ async def test_get_file_summary_api_error(mock_acompletion, session: Session):
     
     result = await get_file_summary(session, file_path, content)
     
-    assert result["summary"] == "Summary unavailable at this time."
+    assert result["summary"] == "AI Summary generation failed due to an unexpected API error."
     assert result["loc"] == 1
     mock_acompletion.assert_called_once()
     
