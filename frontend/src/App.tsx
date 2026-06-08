@@ -1,29 +1,37 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useMemo } from 'react';
 import ReactFlow, {
   Background,
   Controls,
-  MiniMap,
   type Node,
   ReactFlowProvider,
   useReactFlow
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Search, Loader2, FolderSearch, AlertCircle, Waypoints, ChevronUp, ChevronDown, Maximize2, Minimize2, BarChart2, LayoutDashboard } from 'lucide-react';
+import { Search, Loader2, FolderSearch, AlertCircle, Waypoints, Network, ChevronUp, ChevronDown, Maximize2, Minimize2, BarChart2, LayoutDashboard, FolderOpen } from 'lucide-react';
+import axios from 'axios';
 import { useGraphStore } from './store/useGraphStore';
 import FileNode from './components/FileNode';
 import FolderNode from './components/FolderNode';
+import AggregatedNode from './components/AggregatedNode';
+import ImportEdge from './components/ImportEdge';
 import Sidebar from './components/Sidebar';
 import AnalyticsPanel from './components/AnalyticsPanel';
 import StatisticsModal from './components/StatisticsModal';
 
 const nodeTypes = {
   file: FileNode,
-  folder: FolderNode
+  folder: FolderNode,
+  aggregated: AggregatedNode
+};
+
+const edgeTypes = {
+  import: ImportEdge
 };
 
 const AppContent = () => {
   const {
     nodes,
+    rawNodes,
     edges,
     isLoading,
     scanError,
@@ -39,25 +47,41 @@ const AppContent = () => {
     isAnalyticsOpen,
     toggleAnalytics,
     isStatsModalOpen,
-    toggleStatsModal
+    toggleStatsModal,
+    currentViewMode,
+    setViewMode,
+    collapsedNodes,
+    toggleNodeCollapse,
+    searchQuery: globalSearchQuery,
+    setSearchQuery: setGlobalSearchQuery,
+    getVisibleElements
   } = useGraphStore();
 
   const { fitView, setCenter } = useReactFlow();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<Node[]>([]);
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
   const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [autoExpandedFolder, setAutoExpandedFolder] = useState<string | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setGlobalSearchQuery(localSearchQuery);
+    }, 150);
+    return () => clearTimeout(handler);
+  }, [localSearchQuery, setGlobalSearchQuery]);
+
+  const searchResults = useMemo(() => {
+    if (!localSearchQuery.trim()) return [];
+    return rawNodes.filter(n => n.id.toLowerCase().includes(localSearchQuery.toLowerCase()));
+  }, [localSearchQuery, rawNodes]);
 
   // Update search results whenever query changes
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      setFocusedIndex(-1);
-      return;
-    }
-    const matches = nodes.filter(n => n.id.toLowerCase().includes(searchQuery.toLowerCase()));
-    setSearchResults(matches);
     setFocusedIndex(-1);
-  }, [searchQuery, nodes]);
+    setSearchError(null);
+  }, [localSearchQuery]);
+
+  const { visibleNodes, visibleEdges } = getVisibleElements();
 
   const handleScan = async () => {
     if (!scanTarget.trim()) return;
@@ -67,8 +91,24 @@ const AppContent = () => {
     }, 100);
   };
 
-  const handleNodeSearch = (e?: React.FormEvent, direction: 'next' | 'prev' = 'next') => {
+  const handleBrowse = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/api/browse');
+      if (response.data.path) {
+        setScanTarget(response.data.path);
+      }
+    } catch (error) {
+      console.error("Failed to open file browser", error);
+    }
+  };
+
+  const handleNodeSearch = async (e?: React.FormEvent, direction: 'next' | 'prev' = 'next') => {
     if (e) e.preventDefault();
+    if (localSearchQuery.trim() && searchResults.length === 0) {
+      setSearchError("No files found");
+      return;
+    }
+    setSearchError(null);
     if (searchResults.length === 0) return;
     
     let targetIndex = 0;
@@ -86,21 +126,60 @@ const AppContent = () => {
     const targetNode = searchResults[targetIndex];
     
     if (targetNode) {
-      const x = targetNode.position.x + (targetNode.width || 200) / 2;
-      const y = targetNode.position.y + (targetNode.height || 60) / 2;
-      setCenter(x, y, { zoom: 1.5, duration: 800 });
-      if (targetNode.type !== 'folder') {
-        fetchSummary(targetNode.id);
+      // Find the current layout position from the store
+      const currentNode = useGraphStore.getState().nodes.find(n => n.id === targetNode.id) || targetNode;
+      let x = currentNode.position.x + (currentNode.width || 200) / 2;
+      let y = currentNode.position.y + (currentNode.height || 60) / 2;
+      
+      if (currentViewMode === 'file' && targetNode.type === 'file') {
+        const lastSlash = Math.max(targetNode.id.lastIndexOf('/'), targetNode.id.lastIndexOf('\\'));
+        const folder = lastSlash >= 0 ? targetNode.id.substring(0, lastSlash) : 'root';
+        const folderId = `folder_${folder}`;
+        
+        let shouldRefetchPosition = false;
+
+        // Collapse previously auto-expanded folder if it's different
+        if (autoExpandedFolder && autoExpandedFolder !== folderId && !collapsedNodes.has(autoExpandedFolder)) {
+          await toggleNodeCollapse(autoExpandedFolder);
+          shouldRefetchPosition = true;
+        }
+
+        // Expand target folder if collapsed
+        if (collapsedNodes.has(folderId)) {
+          await toggleNodeCollapse(folderId);
+          setAutoExpandedFolder(folderId);
+          shouldRefetchPosition = true;
+        }
+
+        if (shouldRefetchPosition) {
+          // Re-fetch targetNode from the updated nodes state to get new position
+          const updatedNode = useGraphStore.getState().nodes.find(n => n.id === targetNode.id);
+          if (updatedNode) {
+            x = updatedNode.position.x + (updatedNode.width || 200) / 2;
+            y = updatedNode.position.y + (updatedNode.height || 60) / 2;
+          }
+        }
       }
+
+      setCenter(x, y, { zoom: 1.5, duration: 800 });
     }
   };
 
   const handleNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
-      if (node.type === 'folder') return;
+      if (node.type === 'folder' || node.type === 'aggregated') return;
       fetchSummary(node.id);
     },
     [fetchSummary]
+  );
+
+  const handleNodeDoubleClick = useCallback(
+    (_: React.MouseEvent, node: Node) => {
+      if (node.type === 'folder' || node.type === 'aggregated') {
+        toggleNodeCollapse(node.id);
+      }
+    },
+    [toggleNodeCollapse]
   );
 
   return (
@@ -114,6 +193,24 @@ const AppContent = () => {
         </div>
 
         <div className="flex items-center gap-4">
+          {nodes.length > 0 && (
+            <div className="flex items-center bg-slate-900/50 p-1 rounded-xl border border-slate-700/50">
+              {(['file', 'folder', 'module'] as const).map(mode => (
+                <button
+                  key={mode}
+                  onClick={() => {
+                    setViewMode(mode).then(() => {
+                      setTimeout(() => fitView({ padding: 0.2, duration: 800 }), 100);
+                    });
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-all duration-200 ${currentViewMode === mode ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'}`}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="bg-slate-900/50 px-3 py-1.5 rounded-xl border border-slate-700/50 flex items-center gap-2">
             <div className="flex items-center bg-slate-800 rounded-lg px-2 py-1 border border-slate-600 focus-within:border-blue-500/80 focus-within:ring-1 focus-within:ring-blue-500/20 transition-all">
               <FolderSearch className="w-4 h-4 text-blue-400 mr-2" />
@@ -125,6 +222,13 @@ const AppContent = () => {
                 onChange={(e) => setScanTarget(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleScan()}
               />
+              <button 
+                onClick={handleBrowse}
+                className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-blue-400 transition-colors ml-1"
+                title="Browse Folders"
+              >
+                <FolderOpen className="w-3.5 h-3.5" />
+              </button>
             </div>
             <button
               onClick={handleScan}
@@ -156,22 +260,32 @@ const AppContent = () => {
                 </button>
               </div>
 
-              <form onSubmit={(e) => handleNodeSearch(e)} className="bg-slate-900/50 px-3 py-1.5 rounded-xl border border-slate-700/50 flex items-center gap-2 transition-all duration-300">
+              <form onSubmit={(e) => handleNodeSearch(e)} className="bg-slate-900/50 px-3 py-1.5 rounded-xl border border-slate-700/50 flex items-center gap-2 transition-all duration-300 relative">
               <div className="flex items-center bg-slate-800 rounded-lg px-2 py-1 border border-slate-600 focus-within:border-purple-500/80 focus-within:ring-1 focus-within:ring-purple-500/20 transition-all">
                 <Search className="w-4 h-4 text-purple-400 mr-2" />
                 <input
                   type="text"
                   placeholder="Search file..."
                   className="bg-transparent border-none outline-none text-xs w-48 text-slate-200 placeholder-slate-500"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={localSearchQuery}
+                  onChange={(e) => setLocalSearchQuery(e.target.value)}
                 />
-                {searchResults.length > 0 && (
+                {searchResults.length > 0 ? (
                   <span className="text-[10px] text-slate-400 ml-2 font-mono whitespace-nowrap">
                     {focusedIndex === -1 ? 0 : focusedIndex + 1} / {searchResults.length}
                   </span>
-                )}
+                ) : (localSearchQuery.trim() && searchError) ? (
+                  <span className="text-[10px] text-red-400 ml-2 font-mono whitespace-nowrap">
+                    0 / 0
+                  </span>
+                ) : null}
               </div>
+              
+              {localSearchQuery.trim() && searchError && (
+                 <div className="absolute top-12 right-0 bg-red-900/90 text-white text-xs px-2 py-1 rounded shadow-lg">
+                    {searchError}
+                 </div>
+              )}
               
               {searchResults.length > 0 && (
                 <div className="flex items-center gap-1">
@@ -209,7 +323,7 @@ const AppContent = () => {
         ) : nodes.length === 0 && !isLoading ? (
           <div className="absolute inset-0 z-40 flex flex-col items-center justify-center pointer-events-none">
             <div className="flex flex-col items-center text-center opacity-60 select-none cursor-default pointer-events-auto">
-              <Waypoints className="w-24 h-24 text-slate-500 mb-6" strokeWidth={1.5} />
+              <Network className="w-24 h-24 text-slate-500 mb-6" strokeWidth={1.5} />
               <h2 className="text-2xl font-medium text-slate-300 mb-3">Ready to map your architecture</h2>
               <p className="text-slate-400 max-w-md text-base leading-relaxed">
                 Enter a local repository path above and click Scan Repo to begin visualizing your codebase.
@@ -218,12 +332,14 @@ const AppContent = () => {
           </div>
         ) : (
           <ReactFlow
-            nodes={nodes}
-            edges={edges}
+            nodes={visibleNodes}
+            edges={visibleEdges}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onNodeClick={handleNodeClick}
+            onNodeDoubleClick={handleNodeDoubleClick}
             minZoom={0.05}
             fitView
             fitViewOptions={{ maxZoom: 1.2, padding: 0.2 }}
@@ -231,12 +347,6 @@ const AppContent = () => {
           >
             <Background color="#1e293b" variant="dots" gap={24} size={1.5} />
             <Controls className="bg-slate-800 border-slate-700 fill-slate-200" />
-            <MiniMap 
-              nodeStrokeColor="#334155" 
-              nodeColor="#1e293b" 
-              maskColor="rgba(15, 23, 42, 0.85)" 
-              style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b' }} 
-            />
           </ReactFlow>
         )}
       </div>

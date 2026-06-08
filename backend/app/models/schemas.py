@@ -14,10 +14,15 @@ class Edge(BaseModel):
     id: str
     source: str
     target: str
+    statement: str = "import"
+    weight: int = 1
 
-class ScanResponse(BaseModel):
+class GraphData(BaseModel):
     nodes: List[Node]
     edges: List[Edge]
+
+class ScanResponse(BaseModel):
+    graphs: Dict[str, GraphData]
     circular_imports: List[List[str]] = []
     heavy_nodes: dict[str, int] = {}
     unused_dependencies: List[str] = []

@@ -1,8 +1,11 @@
 import os
+import tkinter as tk
+from tkinter import filedialog
+import asyncio
 from fastapi import APIRouter, HTTPException, Depends
 # pyrefly: ignore [missing-import]
 from sqlmodel import Session
-from app.models.schemas import ScanRequest, ScanResponse, Node, Edge, SummaryRequest, SummaryResponse
+from app.models.schemas import ScanRequest, ScanResponse, Node, Edge, SummaryRequest, SummaryResponse, GraphData
 from app.services.crawler import crawl_directory
 from app.services.parsers.factory import ParserFactory
 from app.services.ai_service import get_file_summary
@@ -12,8 +15,22 @@ from app.services.architecture_analyzer import calculate_coupling_metrics
 from app.services.package_tracker import parse_manifests, analyze_package_usage
 from app.services.metrics_analyzer import calculate_file_metrics, aggregate_statistics
 from app.services.git_analyzer import get_git_metadata
+from app.services.graph_aggregator import aggregate_graph
 
 router = APIRouter()
+
+@router.get("/api/browse")
+async def browse_directory():
+    def _open_dialog():
+        root = tk.Tk()
+        root.attributes("-topmost", True)
+        root.withdraw()
+        folder_path = filedialog.askdirectory(title="Select Repository Folder")
+        root.destroy()
+        return folder_path
+        
+    path = await asyncio.to_thread(_open_dialog)
+    return {"path": path}
 
 @router.post("/api/scan", response_model=ScanResponse)
 async def scan_repository(request: ScanRequest):
@@ -41,11 +58,19 @@ async def scan_repository(request: ScanRequest):
         parser = ParserFactory.get_parser(ext)
         if parser:
             dependencies = parser.extract_dependencies(file_path, content)
-            all_extracted_imports.extend(dependencies)
-            for dep in dependencies:
+            
+            for dep_obj in dependencies:
+                dep_target = dep_obj.get("target")
+                dep_statement = dep_obj.get("statement", "import")
+                
+                if not dep_target:
+                    continue
+                    
+                all_extracted_imports.append(dep_target)
+                
                 # Resolve module name (e.g. 'app.models.schemas') to file path suffix
-                dep_path_unix = dep.replace(".", "/") + ".py"
-                dep_path_win = dep.replace(".", "\\") + ".py"
+                dep_path_unix = dep_target.replace(".", "/") + ".py"
+                dep_path_win = dep_target.replace(".", "\\") + ".py"
                 
                 target_file_path = None
                 for p in file_paths:
@@ -56,7 +81,7 @@ async def scan_repository(request: ScanRequest):
                 if target_file_path:
                     # Edge.source is the dependent file, Edge.target is the imported file.
                     edge_id = f"{file_path}-{target_file_path}"
-                    edges.append(Edge(id=edge_id, source=file_path, target=target_file_path))
+                    edges.append(Edge(id=edge_id, source=file_path, target=target_file_path, statement=dep_statement))
                     
     # Graph Analysis
     edges_dict = [{"source": e.source, "target": e.target} for e in edges]
@@ -112,9 +137,19 @@ async def scan_repository(request: ScanRequest):
         "growth_history": git_metadata.get("growth_history", {})
     }
 
+    # Graph Aggregation
+    file_graph = GraphData(nodes=nodes, edges=edges)
+    folder_graph = aggregate_graph(nodes, edges, request.target_path, "folder")
+    module_graph = aggregate_graph(nodes, edges, request.target_path, "module")
+    
+    graphs = {
+        "file": file_graph,
+        "folder": folder_graph,
+        "module": module_graph
+    }
+
     return ScanResponse(
-        nodes=nodes, 
-        edges=edges,
+        graphs=graphs,
         circular_imports=circular_imports,
         heavy_nodes=heavy_nodes,
         unused_dependencies=unused_dependencies,

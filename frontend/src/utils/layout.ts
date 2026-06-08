@@ -12,7 +12,7 @@ const getFolderId = (nodeId: string) => {
 export const getLayoutedElements = async (
   nodes: Node[],
   edges: Edge[],
-  collapsedFolders: Set<string>
+  collapsedNodes: Set<string>
 ): Promise<{ nodes: Node[], edges: Edge[] }> => {
   const visibleNodes: Node[] = [];
   const hiddenNodesMap = new Map<string, string>(); // nodeId -> parentFolderId
@@ -20,7 +20,7 @@ export const getLayoutedElements = async (
   nodes.forEach(n => {
     if (n.type === 'file') {
       const parentFolderId = getFolderId(n.id);
-      if (collapsedFolders.has(parentFolderId)) {
+      if (collapsedNodes.has(parentFolderId)) {
         hiddenNodesMap.set(n.id, parentFolderId);
       } else {
         visibleNodes.push(n);

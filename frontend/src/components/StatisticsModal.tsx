@@ -11,7 +11,8 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer 
+  ResponsiveContainer,
+  Legend
 } from 'recharts';
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#ef4444', '#14b8a6', '#f97316', '#6366f1', '#64748b'];
@@ -58,11 +59,14 @@ export default function StatisticsModal() {
       }
     });
 
+    const totalBytes = languageData.reduce((acc, curr) => acc + (curr.value as number), 0);
+
     return {
       languageData,
       growthData,
       totalAuthors: authors.size,
-      mostActiveDate
+      mostActiveDate,
+      totalBytes
     };
   }, [statistics]);
 
@@ -111,22 +115,56 @@ export default function StatisticsModal() {
                   data={chartData.languageData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={80}
-                  outerRadius={120}
+                  innerRadius={70}
+                  outerRadius={110}
                   paddingAngle={4}
                   dataKey="value"
                   stroke="none"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  labelLine={false}
                 >
                   {chartData.languageData.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip 
-                  formatter={(value: number) => formatBytes(value)} 
-                  contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '0.5rem', color: '#f8fafc' }}
-                  itemStyle={{ color: '#f8fafc' }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      const percentage = ((data.value / chartData.totalBytes) * 100).toFixed(1);
+                      return (
+                        <div className="bg-slate-800 border border-slate-600 rounded-lg p-3 shadow-xl">
+                          <p className="text-slate-200 font-semibold mb-1 flex items-center gap-2">
+                            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: payload[0].color }} />
+                            {data.name}
+                          </p>
+                          <p className="text-slate-400 text-sm ml-5">
+                            {percentage}% <span className="text-slate-500 mx-1">•</span> {formatBytes(data.value)}
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Legend 
+                  layout="vertical" 
+                  verticalAlign="middle" 
+                  align="right"
+                  content={({ payload }) => (
+                    <div className="bg-slate-900/80 border border-slate-700/80 rounded-xl p-1 shadow-lg ml-2 max-h-[260px] overflow-y-auto hidden md:block">
+                      <table className="w-full text-left text-sm">
+                        <tbody>
+                          {(payload || []).map((entry: any, index: number) => (
+                            <tr key={`item-${index}`} className="border-b border-slate-800 last:border-0 hover:bg-slate-800/50 transition-colors">
+                              <td className="py-2.5 px-3 flex items-center gap-2.5">
+                                <div className="w-3 h-3 rounded-sm shadow-sm" style={{ backgroundColor: entry.color }} />
+                                <span className="text-slate-300 font-medium whitespace-nowrap">{entry.value}</span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 />
               </PieChart>
             </ResponsiveContainer>

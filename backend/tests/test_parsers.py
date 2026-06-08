@@ -30,7 +30,9 @@ def my_func():
     pass
 """
     deps = parser.extract_dependencies("test.py", content)
-    assert set(deps) == {"sqlmodel"}
+    targets = {d["target"] for d in deps}
+    assert targets == {"sqlmodel"}
+    assert any(d["statement"] == "from sqlmodel import Field, SQLModel" for d in deps if d["target"] == "sqlmodel")
 
 def test_python_parser_syntax_error(caplog):
     parser = PythonParser()
@@ -52,7 +54,9 @@ const lodash = require('lodash');
 const axios = require("axios");
 """
     deps = parser.extract_dependencies("test.js", content)
-    assert set(deps) == {"react", "react-router-dom", "normalize.css", "lodash", "axios"}
+    targets = {d["target"] for d in deps}
+    assert targets == {"react", "react-router-dom", "normalize.css", "lodash", "axios"}
+    assert any(d["statement"] == "import React, { useState } from 'react'" for d in deps if d["target"] == "react")
 
 def test_cpp_parser():
     parser = CppParser()
@@ -63,7 +67,9 @@ def test_cpp_parser():
 #include 'another_local.hpp'
 """
     deps = parser.extract_dependencies("test.cpp", content)
-    assert set(deps) == {"my_local_header.h", "another_local.hpp"}
+    targets = {d["target"] for d in deps}
+    assert targets == {"my_local_header.h", "another_local.hpp"}
+    assert any(d["statement"] == '#include "my_local_header.h"' for d in deps if d["target"] == "my_local_header.h")
 
 def test_go_parser():
     parser = GoParser()
@@ -77,7 +83,9 @@ import (
 )
 """
     deps = parser.extract_dependencies("test.go", content)
-    assert set(deps) == {"github.com/alias/pkg", "path/to/localpkg", "another/local/pkg"}
+    targets = {d["target"] for d in deps}
+    assert targets == {"github.com/alias/pkg", "path/to/localpkg", "another/local/pkg"}
+    assert any(d["statement"] == 'import alias "github.com/alias/pkg"' for d in deps if d["target"] == "github.com/alias/pkg")
 
 def test_java_parser():
     parser = JavaParser()
@@ -86,7 +94,9 @@ import java.util.List;
 import com.example.myproject.MyClass;
 """
     deps = parser.extract_dependencies("test.java", content)
-    assert set(deps) == {"com.example.myproject.MyClass"}
+    targets = {d["target"] for d in deps}
+    assert targets == {"com.example.myproject.MyClass"}
+    assert any(d["statement"] == "import com.example.myproject.MyClass;" for d in deps if d["target"] == "com.example.myproject.MyClass")
 
 def test_ruby_parser():
     parser = RubyParser()
@@ -96,4 +106,6 @@ require_relative "my_module"
 load 'my_script.rb'
 """
     deps = parser.extract_dependencies("test.rb", content)
-    assert set(deps) == {"my_module", "my_script.rb"}
+    targets = {d["target"] for d in deps}
+    assert targets == {"my_module", "my_script.rb"}
+    assert any(d["statement"] == 'require_relative "my_module"' for d in deps if d["target"] == "my_module")
