@@ -9,7 +9,8 @@ interface FolderNodeData {
 }
 
 const FolderNode = ({ id, data, selected }: NodeProps<FolderNodeData>) => {
-  const toggleFolder = useGraphStore(state => state.toggleFolder);
+  const toggleNodeCollapse = useGraphStore(state => state.toggleNodeCollapse);
+  
   const isCollapsed = data.isCollapsed;
 
   return (
@@ -18,7 +19,7 @@ const FolderNode = ({ id, data, selected }: NodeProps<FolderNodeData>) => {
         ${isCollapsed 
           ? 'bg-slate-800/90 border-slate-600 hover:border-blue-400 hover:bg-slate-700 shadow-slate-900/50' 
           : 'bg-blue-900/20 border-blue-500/50 shadow-blue-900/20'}`}
-      onClick={() => toggleFolder(id)}
+      onClick={() => toggleNodeCollapse(id)}
     >
       <div className={`p-2 rounded-lg transition-colors ${isCollapsed ? 'bg-slate-700 text-slate-300' : 'bg-blue-500/20 text-blue-400'}`}>
         {isCollapsed ? <Folder className="w-5 h-5" /> : <FolderOpen className="w-5 h-5" />}

@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { Handle, Position, type NodeProps } from 'reactflow';
 import { FileCode2, FileJson, FileText, Settings, File, Braces, Terminal, Cpu, Zap, Coffee, Gem, Flame } from 'lucide-react';
+import { useGraphStore } from '../store/useGraphStore';
 
 interface FileNodeData {
   label: string;
@@ -90,7 +91,6 @@ const getSemanticColors = (filename: string, selected: boolean) => {
 };
 
 const FileNode = ({ data, selected }: NodeProps<FileNodeData>) => {
-  // Extract filename safely
   const filename = data.label ? (data.label.split(/[/\\]/).pop() || data.label) : 'Unknown';
   const ext = filename.split('.').pop() || '';
   const semanticClasses = getSemanticColors(filename, selected);

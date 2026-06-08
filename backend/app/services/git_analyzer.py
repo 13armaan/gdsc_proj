@@ -1,4 +1,5 @@
 import subprocess
+import os
 from collections import defaultdict
 from typing import Dict, Any
 
@@ -88,3 +89,23 @@ def get_git_metadata(target_path: str) -> Dict[str, Any]:
         pass
 
     return result
+
+def get_file_commit_counts(target_path: str) -> Dict[str, int]:
+    try:
+        output = subprocess.run(
+            ["git", "log", "--pretty=format:", "--name-only"],
+            cwd=target_path,
+            capture_output=True,
+            text=True,
+            check=True
+        ).stdout
+
+        counts = defaultdict(int)
+        for line in output.split('\n'):
+            line = line.strip()
+            if line:
+                abs_path = os.path.normpath(os.path.join(target_path, line))
+                counts[abs_path] += 1
+        return dict(counts)
+    except Exception:
+        return {}

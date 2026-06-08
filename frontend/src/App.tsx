@@ -7,7 +7,7 @@ import ReactFlow, {
   useReactFlow
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Search, Loader2, FolderSearch, AlertCircle, Waypoints, Network, ChevronUp, ChevronDown, Maximize2, Minimize2, BarChart2, LayoutDashboard, FolderOpen } from 'lucide-react';
+import { Search, Loader2, FolderSearch, AlertCircle, Waypoints, Map, ChevronUp, ChevronDown, Maximize2, Minimize2, BarChart2, LayoutDashboard, ClipboardPaste } from 'lucide-react';
 import axios from 'axios';
 import { useGraphStore } from './store/useGraphStore';
 import FileNode from './components/FileNode';
@@ -91,14 +91,15 @@ const AppContent = () => {
     }, 100);
   };
 
-  const handleBrowse = async () => {
+  const handleInputFocus = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/browse');
-      if (response.data.path) {
-        setScanTarget(response.data.path);
+      const text = await navigator.clipboard.readText();
+      const isPath = /^([a-zA-Z]:[\\/].*|^\/.*)$/.test(text.trim());
+      if (isPath && scanTarget !== text.trim()) {
+        setScanTarget(text.trim());
       }
-    } catch (error) {
-      console.error("Failed to open file browser", error);
+    } catch (err) {
+      // Ignore clipboard permission errors if denied
     }
   };
 
@@ -222,13 +223,16 @@ const AppContent = () => {
                 onChange={(e) => setScanTarget(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleScan()}
               />
-              <button 
-                onClick={handleBrowse}
-                className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-blue-400 transition-colors ml-1"
-                title="Browse Folders"
-              >
-                <FolderOpen className="w-3.5 h-3.5" />
-              </button>
+              {navigator.clipboard && (
+                <button 
+                  type="button"
+                  onClick={handleInputFocus}
+                  className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-blue-400 transition-colors ml-1"
+                  title="Auto-Paste Path"
+                >
+                  <ClipboardPaste className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
             <button
               onClick={handleScan}
@@ -305,11 +309,14 @@ const AppContent = () => {
       </header>
 
       {/* Main Canvas Area */}
-      <div className="flex-1 w-full relative">
+      <div className="flex-1 w-full relative caret-transparent">
         {isLoading && (
-          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-sm">
-            <Loader2 className="w-12 h-12 animate-spin text-blue-500 mb-4" />
-            <p className="text-lg font-semibold text-slate-100">Analyzing Repository...</p>
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm pointer-events-none caret-transparent">
+            <div className="flex flex-col items-center select-none cursor-default">
+              <Loader2 className="w-12 h-12 animate-spin text-blue-500 mb-4 outline-none" strokeWidth={1.5} />
+              <h2 className="text-xl font-medium text-slate-200">Analyzing Repository...</h2>
+              <p className="text-slate-400 mt-2 text-sm">Building graph nodes and edges</p>
+            </div>
           </div>
         )}
         {scanError ? (
@@ -321,9 +328,9 @@ const AppContent = () => {
             </div>
           </div>
         ) : nodes.length === 0 && !isLoading ? (
-          <div className="absolute inset-0 z-40 flex flex-col items-center justify-center pointer-events-none">
-            <div className="flex flex-col items-center text-center opacity-60 select-none cursor-default pointer-events-auto">
-              <Network className="w-24 h-24 text-slate-500 mb-6" strokeWidth={1.5} />
+          <div className="absolute inset-0 z-40 flex flex-col items-center justify-center pointer-events-none caret-transparent">
+            <div className="flex flex-col items-center text-center opacity-60 select-none cursor-default pointer-events-none caret-transparent">
+              <Map className="w-24 h-24 text-slate-500 mb-6 outline-none" strokeWidth={1.5} />
               <h2 className="text-2xl font-medium text-slate-300 mb-3">Ready to map your architecture</h2>
               <p className="text-slate-400 max-w-md text-base leading-relaxed">
                 Enter a local repository path above and click Scan Repo to begin visualizing your codebase.

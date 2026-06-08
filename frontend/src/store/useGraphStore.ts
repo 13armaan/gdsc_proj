@@ -61,7 +61,6 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   nodes: [],
   edges: [],
   circularImports: [],
-  heavyNodes: {},
   unusedDependencies: [],
   packageStats: {},
   layers: {},
