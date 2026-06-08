@@ -18,6 +18,14 @@ class Edge(BaseModel):
 class ScanResponse(BaseModel):
     nodes: List[Node]
     edges: List[Edge]
+    circular_imports: List[List[str]] = []
+    heavy_nodes: dict[str, int] = {}
+    unused_dependencies: List[str] = []
+    package_stats: dict[str, int] = {}
+    layers: dict[str, List[str]] = {}
+    coupling_metrics: dict[str, dict] = {}
+    violations: List[dict] = []
+    monolithic_components: List[str] = []
 
 class SummaryRequest(BaseModel):
     file_path: str

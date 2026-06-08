@@ -53,7 +53,15 @@ async def get_file_summary(session: Session, file_path: str, content: str) -> di
         
     except Exception as e:
         logger.warning(f"LLM API error for {file_path}: {e}")
+        error_str = str(e).lower()
+        if "503" in error_str or "unavailable" in error_str or "high demand" in error_str:
+            friendly_msg = "AI Summary is temporarily unavailable due to high API demand. Please try again later."
+        elif "429" in error_str or "rate limit" in error_str or "quota" in error_str:
+            friendly_msg = "AI Summary rate limit exceeded. Please wait a moment and try again."
+        else:
+            friendly_msg = "AI Summary generation failed due to an unexpected API error."
+            
         return {
-            "summary": f"Summary unavailable: {str(e)}",
+            "summary": friendly_msg,
             "loc": loc
         }

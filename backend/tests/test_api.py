@@ -13,23 +13,28 @@ client = TestClient(app)
 def test_scan_repository(mock_crawl):
     with tempfile.TemporaryDirectory() as temp_dir:
         test_file = os.path.join(temp_dir, "test.py")
+        dep_file = os.path.join(temp_dir, "my_local_module.py")
         with open(test_file, "w", encoding='utf-8') as f:
-            f.write("import os")
+            f.write("import my_local_module")
+        with open(dep_file, "w", encoding='utf-8') as f:
+            f.write("")
             
-        mock_crawl.return_value = [test_file]
+        mock_crawl.return_value = [test_file, dep_file]
         
         response = client.post("/api/scan", json={"target_path": temp_dir})
         assert response.status_code == 200
         data = response.json()
         
-        assert len(data["nodes"]) == 1
-        assert data["nodes"][0]["id"] == test_file
-        assert data["nodes"][0]["label"] == "test.py"
+        assert len(data["nodes"]) == 2
         
         assert len(data["edges"]) == 1
         assert data["edges"][0]["source"] == test_file
-        assert data["edges"][0]["target"] == "os"
-        assert data["edges"][0]["id"] == f"{test_file}-os"
+        assert data["edges"][0]["target"] == dep_file
+        
+        assert "layers" in data
+        assert "coupling_metrics" in data
+        assert "violations" in data
+        assert "monolithic_components" in data
 
 def test_scan_repository_invalid_path():
     response = client.post("/api/scan", json={"target_path": "/invalid/nonexistent/path/123"})

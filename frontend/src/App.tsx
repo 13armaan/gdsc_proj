@@ -8,15 +8,16 @@ import ReactFlow, {
   useReactFlow
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Search, Loader2, FolderSearch, AlertCircle, Waypoints, ChevronUp, ChevronDown } from 'lucide-react';
+import { Search, Loader2, FolderSearch, AlertCircle, Waypoints, ChevronUp, ChevronDown, Maximize2, Minimize2, BarChart2 } from 'lucide-react';
 import { useGraphStore } from './store/useGraphStore';
 import FileNode from './components/FileNode';
 import FolderNode from './components/FolderNode';
 import Sidebar from './components/Sidebar';
+import AnalyticsPanel from './components/AnalyticsPanel';
 
 const nodeTypes = {
   file: FileNode,
-  folder: FolderNode,
+  folder: FolderNode
 };
 
 const AppContent = () => {
@@ -31,7 +32,11 @@ const AppContent = () => {
     onNodesChange,
     onEdgesChange,
     fetchSummary,
-    selectedNode
+    selectedNode,
+    expandAllFolders,
+    collapseAllFolders,
+    isAnalyticsOpen,
+    toggleAnalytics
   } = useGraphStore();
 
   const { fitView, setCenter } = useReactFlow();
@@ -129,7 +134,22 @@ const AppContent = () => {
           </div>
 
           {nodes.length > 0 && (
-            <form onSubmit={(e) => handleNodeSearch(e)} className="bg-slate-900/50 px-3 py-1.5 rounded-xl border border-slate-700/50 flex items-center gap-2 transition-all duration-300">
+            <>
+              <div className="flex items-center gap-2">
+                <button onClick={expandAllFolders} className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700/50 flex items-center gap-1.5 text-xs font-medium transition-colors" title="Expand All">
+                  <Maximize2 className="w-3.5 h-3.5" />
+                </button>
+                <button onClick={collapseAllFolders} className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700/50 flex items-center gap-1.5 text-xs font-medium transition-colors" title="Collapse All">
+                  <Minimize2 className="w-3.5 h-3.5" />
+                </button>
+                <div className="w-px h-6 bg-slate-700 mx-1"></div>
+                <button onClick={toggleAnalytics} className={`px-3 py-1.5 rounded-lg border flex items-center gap-1.5 text-xs font-medium transition-all duration-200 ${isAnalyticsOpen ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-slate-800 hover:bg-slate-700 border-slate-700/50 text-slate-300'}`} title="View Insights">
+                  <BarChart2 className="w-3.5 h-3.5" />
+                  Insights
+                </button>
+              </div>
+
+              <form onSubmit={(e) => handleNodeSearch(e)} className="bg-slate-900/50 px-3 py-1.5 rounded-xl border border-slate-700/50 flex items-center gap-2 transition-all duration-300">
               <div className="flex items-center bg-slate-800 rounded-lg px-2 py-1 border border-slate-600 focus-within:border-purple-500/80 focus-within:ring-1 focus-within:ring-purple-500/20 transition-all">
                 <Search className="w-4 h-4 text-purple-400 mr-2" />
                 <input
@@ -158,6 +178,7 @@ const AppContent = () => {
               )}
               <button type="submit" className="hidden">Search</button>
             </form>
+            </>
           )}
         </div>
       </header>
@@ -199,6 +220,7 @@ const AppContent = () => {
             minZoom={0.05}
             fitView
             fitViewOptions={{ maxZoom: 1.2, padding: 0.2 }}
+            proOptions={{ hideAttribution: true }}
           >
             <Background color="#1e293b" variant="dots" gap={24} size={1.5} />
             <Controls className="bg-slate-800 border-slate-700 fill-slate-200" />
@@ -212,6 +234,7 @@ const AppContent = () => {
         )}
       </div>
 
+      <AnalyticsPanel />
       <Sidebar />
     </div>
   );
