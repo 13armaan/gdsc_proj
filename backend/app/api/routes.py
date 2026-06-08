@@ -28,16 +28,8 @@ async def scan_repository(request: ScanRequest):
         
     file_paths = await crawl_directory(request.target_path)
     
-    from app.services.git_analyzer import get_file_commit_counts
-    commit_counts = get_file_commit_counts(request.target_path)
     file_metrics_list = calculate_file_metrics(file_paths)
     metrics_by_path = {m["file_path"]: m for m in file_metrics_list}
-    
-    max_comp = max((m.get("complexity_score", 0) for m in metrics_by_path.values()), default=1)
-    if max_comp == 0: max_comp = 1
-    
-    max_comm = max(commit_counts.values(), default=1) if commit_counts else 1
-    if max_comm == 0: max_comm = 1
     
     nodes = []
     edges = []
@@ -48,21 +40,12 @@ async def scan_repository(request: ScanRequest):
         
         m = metrics_by_path.get(file_path, {})
         loc = m.get("loc", 0)
-        complexity = m.get("complexity_score", 0)
-        commits = commit_counts.get(file_path, 0)
-        
-        norm_comp = complexity / max_comp
-        norm_comm = commits / max_comm
-        bug_risk = (norm_comp * 0.6) + (norm_comm * 0.4)
         
         nodes.append(Node(
             id=file_path, 
             label=file_name, 
             type="file",
-            loc=loc,
-            complexity=complexity,
-            commitCount=commits,
-            bugRiskIndex=round(bug_risk, 3)
+            loc=loc
         ))
         
         _, ext = os.path.splitext(file_path)

@@ -9,9 +9,6 @@ class Node(BaseModel):
     label: str
     type: str
     loc: Optional[int] = None
-    complexity: Optional[int] = 0
-    commitCount: Optional[int] = 0
-    bugRiskIndex: Optional[float] = 0.0
 
 class Edge(BaseModel):
     id: str

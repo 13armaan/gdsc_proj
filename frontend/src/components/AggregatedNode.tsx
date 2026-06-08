@@ -16,7 +16,7 @@ const AggregatedNode = ({ data, selected }: NodeProps<AggregatedNodeData>) => {
     : 'bg-slate-800/60 border-slate-700/80 hover:border-slate-500/80';
 
   return (
-    <div className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all duration-200 shadow-lg min-w-[200px] backdrop-blur-sm ${semanticClasses}`}>
+    <div className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all duration-200 shadow-lg w-[250px] max-w-[250px] backdrop-blur-sm ${semanticClasses}`}>
       <Handle type="target" position={Position.Top} className="opacity-0 w-0 h-0" />
       
       <div className={`flex items-center justify-center p-2 rounded-lg shadow-inner ${data.viewType === 'folder' ? 'bg-amber-900/20' : 'bg-purple-900/20'}`}>

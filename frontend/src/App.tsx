@@ -183,6 +183,10 @@ const AppContent = () => {
     [toggleNodeCollapse]
   );
 
+  const handleNodeDragStop = useCallback((_: any, node: Node) => {
+    useGraphStore.getState().resolveNodeCollisions(node.id);
+  }, []);
+
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-slate-900 text-slate-100 font-sans">
       
@@ -347,6 +351,7 @@ const AppContent = () => {
             onEdgesChange={onEdgesChange}
             onNodeClick={handleNodeClick}
             onNodeDoubleClick={handleNodeDoubleClick}
+            onNodeDragStop={handleNodeDragStop}
             minZoom={0.05}
             fitView
             fitViewOptions={{ maxZoom: 1.2, padding: 0.2 }}

@@ -44,6 +44,7 @@ interface GraphState {
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   fetchSummary: (nodeId: string) => Promise<void>;
+  resolveNodeCollisions: (draggedNodeId: string) => void;
   clearSelection: () => void;
   expandAllFolders: () => Promise<void>;
   collapseAllFolders: () => Promise<void>;
@@ -138,6 +139,72 @@ export const useGraphStore = create<GraphState>((set, get) => ({
     set({
       nodes: applyNodeChanges(changes, get().nodes),
     });
+  },
+
+  resolveNodeCollisions: (draggedNodeId: string) => {
+    const { nodes } = get();
+    const PADDING = 30;
+    
+    let updatedNodes = [...nodes];
+    let hasCollisions = true;
+    let iterations = 0;
+    const MAX_ITERATIONS = 5;
+    
+    while (hasCollisions && iterations < MAX_ITERATIONS) {
+      hasCollisions = false;
+      iterations++;
+      
+      for (let i = 0; i < updatedNodes.length; i++) {
+        for (let j = i + 1; j < updatedNodes.length; j++) {
+          const n1 = updatedNodes[i];
+          const n2 = updatedNodes[j];
+          
+          if (n1.style?.opacity === 0 || n2.style?.opacity === 0) continue;
+          
+          const w1 = n1.width || (n1.type === 'folder' ? 256 : (n1.type === 'aggregated' ? 250 : 180));
+          const h1 = n1.height || (n1.type === 'folder' ? 60 : (n1.type === 'aggregated' ? 75 : 40));
+          const w2 = n2.width || (n2.type === 'folder' ? 256 : (n2.type === 'aggregated' ? 250 : 180));
+          const h2 = n2.height || (n2.type === 'folder' ? 60 : (n2.type === 'aggregated' ? 75 : 40));
+          
+          const dx = (n2.position.x + w2/2) - (n1.position.x + w1/2);
+          const dy = (n2.position.y + h2/2) - (n1.position.y + h1/2);
+          const absDx = Math.abs(dx);
+          const absDy = Math.abs(dy);
+          
+          const minDx = (w1 + w2) / 2 + PADDING;
+          const minDy = (h1 + h2) / 2 + PADDING;
+          
+          if (absDx < minDx && absDy < minDy) {
+            hasCollisions = true;
+            
+            const overlapX = minDx - absDx;
+            const overlapY = minDy - absDy;
+            
+            let pushX = dx === 0 ? (Math.random() > 0.5 ? 10 : -10) : (dx / absDx) * overlapX;
+            let pushY = dy === 0 ? (Math.random() > 0.5 ? 10 : -10) : (dy / absDy) * overlapY;
+            
+            if (overlapX < overlapY) {
+               pushY = 0;
+            } else {
+               pushX = 0;
+            }
+            
+            if (n1.id === draggedNodeId) {
+              updatedNodes[j] = { ...n2, position: { x: n2.position.x + pushX, y: n2.position.y + pushY } };
+            } else if (n2.id === draggedNodeId) {
+              updatedNodes[i] = { ...n1, position: { x: n1.position.x - pushX, y: n1.position.y - pushY } };
+            } else {
+              updatedNodes[i] = { ...n1, position: { x: n1.position.x - pushX/2, y: n1.position.y - pushY/2 } };
+              updatedNodes[j] = { ...n2, position: { x: n2.position.x + pushX/2, y: n2.position.y + pushY/2 } };
+            }
+          }
+        }
+      }
+    }
+    
+    if (iterations > 1) {
+      set({ nodes: updatedNodes });
+    }
   },
   onEdgesChange: (changes: EdgeChange[]) => {
     set({

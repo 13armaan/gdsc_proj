@@ -1,7 +1,10 @@
 import os
 import asyncio
 
-IGNORED_DIRS = {".git", "node_modules", "venv", ".venv", "__pycache__", "build", "dist"}
+IGNORED_DIRS = {
+    ".git", "node_modules", "venv", ".venv", "__pycache__", "build", "dist",
+    ".pytest_cache", ".mypy_cache", ".vscode", ".idea", "coverage", ".next", ".nuxt", "target"
+}
 
 async def crawl_directory(target_path: str) -> list[str]:
     """

@@ -57,11 +57,22 @@ export const getLayoutedElements = async (
     }
   });
 
-  const elkNodes = visibleNodes.map(n => ({
-    id: n.id,
-    width: n.type === 'folder' ? 256 : 180,
-    height: n.type === 'folder' ? 60 : 40
-  }));
+  const elkNodes = visibleNodes.map(n => {
+    let width = 180;
+    let height = 40;
+    if (n.type === 'folder') {
+      width = 256;
+      height = 60;
+    } else if (n.type === 'aggregated') {
+      width = 250;
+      height = 75;
+    }
+    return {
+      id: n.id,
+      width,
+      height
+    };
+  });
 
   const elkEdges = finalEdges.map(e => ({
     id: e.id,
@@ -74,8 +85,8 @@ export const getLayoutedElements = async (
     layoutOptions: {
       'elk.algorithm': 'layered',
       'elk.direction': 'DOWN',
-      'elk.spacing.nodeNode': '20',
-      'elk.layered.spacing.nodeNodeBetweenLayers': '50',
+      'elk.spacing.nodeNode': '40',
+      'elk.layered.spacing.nodeNodeBetweenLayers': '60',
       'elk.edgeRouting': 'ORTHOGONAL',
       'elk.layered.nodePlacement.strategy': 'NETWORK_SIMPLEX',
       'elk.layered.compaction.postCompaction.strategy': 'EDGE_LENGTH'
