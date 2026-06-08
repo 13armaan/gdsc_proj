@@ -8,20 +8,17 @@ By parsing the Abstract Syntax Tree (AST) of your source files, RepoMap Analyzer
 
 ### 1. Interactive Architecture Map
 The core visualizer leverages React Flow and the ELK (Eclipse Layout Kernel) routing algorithm to generate a clean, layered, force-directed graph of your entire codebase.
-![Architecture Map](docs/screenshots/architecture_map.png)
 
 ### 2. Multi-Level Semantic Aggregation
 The visualization engine supports dynamic detail resolution, allowing developers to switch between macro and micro architectural views instantly:
 - **File View**: A granular, file-by-file dependency graph mapping exact imports and file relationships.
 - **Folder View**: Aggregates internal complexity by physical directory, highlighting heavy structural areas.
 - **Module View**: A high-level domain grouping that abstracts away deep nested folders into top-level functional modules.
-![Aggregation Views](docs/screenshots/aggregation_views.png)
 
 ### 3. Dependency Tracking & Violation Detection
 The backend statically parses imports and traces cross-file relationships. The graph visually highlights architectural violations:
 - **Circular Imports**: Identified and marked with bright red, weighted edges.
 - **Cross-Language Coupling**: Edges are differentiated to show interactions between disparate technology stacks.
-![Dependency Detection](docs/screenshots/dependency_detection.png)
 
 ### 4. Interactive Layout & Collision Resolution
 The layout engine is fully interactive. When nodes are dragged, the system computes physical bounding box collisions and iteratively displaces overlapping neighbors to maintain a perfectly readable graph structure without manual untangling.
@@ -31,11 +28,9 @@ An integrated analytics panel provides immediate feedback on the repository's ov
 - Detection of monolithic files (based on Line of Code density and dependency weight).
 - Identification of highly-coupled "God modules".
 - Statistical distributions of codebase complexity and file sizes.
-![Analytics Dashboard](docs/screenshots/analytics_dashboard.png)
 
 ### 6. Semantic AI Summarization
 Selecting any individual node in the graph triggers the LLM integration. The backend uses Google Gemini to read the file contents, parse its intent, and stream a comprehensive explanation of its purpose, design patterns, and internal dependencies into a right-hand inspection panel.
-![Semantic Summarization](docs/screenshots/semantic_summarization.png)
 
 ---
 
