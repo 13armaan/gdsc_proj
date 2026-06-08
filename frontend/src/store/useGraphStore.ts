@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { type Node, type Edge, applyNodeChanges, applyEdgeChanges, type NodeChange, type EdgeChange, MarkerType } from 'reactflow';
+import { type Node, type Edge, applyNodeChanges, applyEdgeChanges, type NodeChange, type EdgeChange, MarkerType, type OnNodesChange, type OnEdgesChange } from 'reactflow';
 import axios from 'axios';
 import { getLayoutedElements } from '../utils/layout';
 
@@ -8,29 +8,34 @@ export interface SummaryData {
   loc?: number;
 }
 
-interface GraphStore {
-  scanTarget: string;
+interface GraphState {
+  rawNodes: Node[];
+  rawEdges: Edge[];
   nodes: Node[];
   edges: Edge[];
+  collapsedFolders: Set<string>;
+  scanTarget: string;
   selectedNode: string | null;
-  summaryData: SummaryData | null;
+  summaryData: any | null;
   isLoading: boolean;
   isSummaryLoading: boolean;
   scanError: string | null;
-
-  setScanTarget: (path: string) => void;
+  setScanTarget: (target: string) => void;
   fetchGraph: () => Promise<void>;
-  fetchSummary: (filePath: string) => Promise<void>;
+  toggleFolder: (folderId: string) => Promise<void>;
+  onNodesChange: OnNodesChange;
+  onEdgesChange: OnEdgesChange;
+  fetchSummary: (nodeId: string) => Promise<void>;
   clearSelection: () => void;
-  
-  onNodesChange: (changes: any) => void;
-  onEdgesChange: (changes: any) => void;
 }
 
-export const useGraphStore = create<GraphStore>((set, get) => ({
-  scanTarget: '',
+export const useGraphStore = create<GraphState>((set, get) => ({
+  rawNodes: [],
+  rawEdges: [],
   nodes: [],
   edges: [],
+  collapsedFolders: new Set<string>(),
+  scanTarget: '',
   selectedNode: null,
   summaryData: null,
   isLoading: false,
@@ -53,43 +58,101 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
 
   fetchGraph: async () => {
     const { scanTarget } = get();
-    if (!scanTarget) return;
+    if (!scanTarget.trim()) return;
 
-    set({ isLoading: true, selectedNode: null, summaryData: null, scanError: null });
     try {
+      set({ isLoading: true, scanError: null });
       const response = await axios.post('http://localhost:8000/api/scan', { target_path: scanTarget });
       
-      // Transform raw backend edges/nodes if necessary. React Flow requires position, data, etc.
-      // Assuming backend nodes are: { id, label, type }
-      // Assuming backend edges are: { id, source, target }
-      
-      const formattedNodes: Node[] = response.data.nodes.map((n: any) => ({
-        id: n.id,
-        type: n.type || 'file',
-        data: { 
-          label: n.label,
-          type: n.label.split('.').pop() || 'unknown',
-          loc: n.loc
-        },
-        position: { x: 0, y: 0 } // initial position before layout
-      }));
-      
-      const formattedEdges: Edge[] = response.data.edges.map((e: any) => ({
-        id: e.id,
-        source: e.source,
-        target: e.target,
-        animated: true,
-        style: { stroke: '#64748b', strokeWidth: 2 },
-        markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' }
-      }));
+      const incomingNodes = response.data.nodes;
+      const incomingEdges = response.data.edges;
 
-      const layouted = getLayoutedElements(formattedNodes, formattedEdges, 'TB');
+      const folderMap = new Map<string, number>();
+      incomingNodes.forEach((n: any) => {
+        const lastSlash = Math.max(n.id.lastIndexOf('/'), n.id.lastIndexOf('\\'));
+        const folder = lastSlash >= 0 ? n.id.substring(0, lastSlash) : 'root';
+        folderMap.set(folder, (folderMap.get(folder) || 0) + 1);
+      });
+
+      const allNodes: Node[] = [];
+      const allEdges: Edge[] = [];
+      const defaultCollapsed = new Set<string>();
+
+      folderMap.forEach((count, folderId) => {
+        const id = `folder_${folderId}`;
+        defaultCollapsed.add(id);
+        allNodes.push({
+          id,
+          type: 'folder',
+          data: { label: folderId.split(/[\/\\]/).pop() || 'root', fileCount: count, isCollapsed: true },
+          position: { x: 0, y: 0 }
+        });
+      });
+
+      incomingNodes.forEach((n: any) => {
+        const lastSlash = Math.max(n.id.lastIndexOf('/'), n.id.lastIndexOf('\\'));
+        const folder = lastSlash >= 0 ? n.id.substring(0, lastSlash) : 'root';
+        const folderId = `folder_${folder}`;
+        
+        allNodes.push({
+          id: n.id,
+          type: 'file',
+          data: { label: n.label, type: n.type, loc: n.loc },
+          position: { x: 0, y: 0 }
+        });
+
+        allEdges.push({
+          id: `struct_${folderId}_${n.id}`,
+          source: folderId,
+          target: n.id,
+          type: 'default',
+          style: { stroke: '#475569', strokeWidth: 1.5, strokeDasharray: '4 4' },
+          animated: false
+        });
+      });
+
+      incomingEdges.forEach((e: any) => {
+        allEdges.push({
+          id: `${e.source}-${e.target}`,
+          source: e.source,
+          target: e.target,
+          type: 'smoothstep', // Orthogonal edges
+          animated: true,
+          style: { stroke: '#475569', strokeWidth: 1.5, opacity: 0.6 },
+          markerEnd: { type: MarkerType.ArrowClosed, color: '#475569' }
+        });
+      });
+
+      const { nodes: layoutedNodes, edges: layoutedEdges } = await getLayoutedElements(allNodes, allEdges, defaultCollapsed);
       
-      set({ nodes: layouted.nodes, edges: layouted.edges, isLoading: false, scanError: null });
+      set({ rawNodes: allNodes, rawEdges: allEdges, nodes: layoutedNodes, edges: layoutedEdges, collapsedFolders: defaultCollapsed, isLoading: false });
     } catch (error: any) {
-      console.error('Error fetching graph:', error);
-      set({ isLoading: false, scanError: error.message || 'Failed to connect to backend.' });
+      console.error("Error fetching graph:", error);
+      set({ 
+        scanError: error.response?.data?.detail || 'Failed to analyze repository. Please check the path and try again.',
+        isLoading: false 
+      });
     }
+  },
+
+  toggleFolder: async (folderId: string) => {
+    const { collapsedFolders, rawNodes, rawEdges } = get();
+    const newCollapsed = new Set(collapsedFolders);
+    if (newCollapsed.has(folderId)) {
+      newCollapsed.delete(folderId);
+    } else {
+      newCollapsed.add(folderId);
+    }
+    
+    const updatedRawNodes = rawNodes.map(n => {
+      if (n.id === folderId) {
+        return { ...n, data: { ...n.data, isCollapsed: newCollapsed.has(folderId) } };
+      }
+      return n;
+    });
+    
+    const { nodes: layoutedNodes, edges: layoutedEdges } = await getLayoutedElements(updatedRawNodes, rawEdges, newCollapsed);
+    set({ collapsedFolders: newCollapsed, rawNodes: updatedRawNodes, nodes: layoutedNodes, edges: layoutedEdges });
   },
 
   fetchSummary: async (filePath) => {

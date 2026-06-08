@@ -1,100 +1,112 @@
-import dagre from 'dagre';
+import ELK from 'elkjs/lib/elk.bundled.js';
 import { type Node, type Edge } from 'reactflow';
 
-const nodeWidth = 250;
-const nodeHeight = 60;
+const elk = new ELK();
 
-export const getLayoutedElements = (
+const getFolderId = (nodeId: string) => {
+  const lastSlash = Math.max(nodeId.lastIndexOf('/'), nodeId.lastIndexOf('\\'));
+  const folder = lastSlash >= 0 ? nodeId.substring(0, lastSlash) : 'root';
+  return `folder_${folder}`;
+};
+
+export const getLayoutedElements = async (
   nodes: Node[],
   edges: Edge[],
-  direction = 'TB'
-): { nodes: Node[], edges: Edge[] } => {
-  const dagreGraph = new dagre.graphlib.Graph();
-  dagreGraph.setDefaultEdgeLabel(() => ({}));
-  dagreGraph.setGraph({ rankdir: direction });
-
-  const connectedNodes: Node[] = [];
-  const isolatedNodes: Node[] = [];
-  
-  const edgeSet = new Set<string>();
-  edges.forEach(e => {
-    edgeSet.add(e.source);
-    edgeSet.add(e.target);
-  });
+  collapsedFolders: Set<string>
+): Promise<{ nodes: Node[], edges: Edge[] }> => {
+  const visibleNodes: Node[] = [];
+  const hiddenNodesMap = new Map<string, string>(); // nodeId -> parentFolderId
 
   nodes.forEach(n => {
-    if (edgeSet.has(n.id)) connectedNodes.push(n);
-    else isolatedNodes.push(n);
+    if (n.type === 'file') {
+      const parentFolderId = getFolderId(n.id);
+      if (collapsedFolders.has(parentFolderId)) {
+        hiddenNodesMap.set(n.id, parentFolderId);
+      } else {
+        visibleNodes.push(n);
+      }
+    } else {
+      visibleNodes.push(n); // folder nodes are always in the layout
+    }
   });
 
-  // 1. Layout connected nodes using dagre
-  connectedNodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
+  const visibleEdges: Edge[] = [];
+  edges.forEach(e => {
+    let source = e.source;
+    let target = e.target;
+    
+    // Drop structural edges pointing to hidden children
+    if (e.id.startsWith('struct_') && hiddenNodesMap.has(target)) return;
+
+    if (hiddenNodesMap.has(source)) source = hiddenNodesMap.get(source)!;
+    if (hiddenNodesMap.has(target)) target = hiddenNodesMap.get(target)!;
+
+    if (source === target) return; // Drop self-loops
+
+    visibleEdges.push({ ...e, source, target, id: `${source}-${target}-${e.id}` });
   });
 
-  edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target);
+  // Deduplicate edges
+  const edgeSeen = new Set<string>();
+  const finalEdges: Edge[] = [];
+  visibleEdges.forEach(e => {
+    const key = `${e.source}->${e.target}`;
+    if (!edgeSeen.has(key)) {
+      edgeSeen.add(key);
+      finalEdges.push(e);
+    }
   });
 
-  dagre.layout(dagreGraph);
+  const elkNodes = visibleNodes.map(n => ({
+    id: n.id,
+    width: n.type === 'folder' ? 256 : 180,
+    height: n.type === 'folder' ? 60 : 40
+  }));
 
-  let maxY = 0;
-  const layoutedNodes = connectedNodes.map((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id);
-    const newNode = { ...node };
-    newNode.position = {
-      x: nodeWithPosition.x - nodeWidth / 2,
-      y: nodeWithPosition.y - nodeHeight / 2,
-    };
-    maxY = Math.max(maxY, newNode.position.y + nodeHeight);
+  const elkEdges = finalEdges.map(e => ({
+    id: e.id,
+    sources: [e.source],
+    targets: [e.target]
+  }));
+
+  const graph = {
+    id: 'root',
+    layoutOptions: {
+      'elk.algorithm': 'layered',
+      'elk.direction': 'DOWN',
+      'elk.spacing.nodeNode': '20',
+      'elk.layered.spacing.nodeNodeBetweenLayers': '50',
+      'elk.edgeRouting': 'ORTHOGONAL',
+      'elk.layered.nodePlacement.strategy': 'NETWORK_SIMPLEX',
+      'elk.layered.compaction.postCompaction.strategy': 'EDGE_LENGTH'
+    },
+    children: elkNodes,
+    edges: elkEdges
+  };
+
+  const layoutedGraph = await elk.layout(graph);
+  
+  const positionMap = new Map<string, { x: number, y: number }>();
+  layoutedGraph.children?.forEach(n => {
+    if (n.x !== undefined && n.y !== undefined) {
+      positionMap.set(n.id, { x: n.x, y: n.y });
+    }
+  });
+
+  const finalNodes = nodes.map(n => {
+    const newNode = { ...n };
+    if (hiddenNodesMap.has(n.id)) {
+      const parentId = hiddenNodesMap.get(n.id)!;
+      const parentPos = positionMap.get(parentId) || { x: 0, y: 0 };
+      newNode.position = { x: parentPos.x + 110, y: parentPos.y + 35 }; // Center of folder node
+      newNode.style = { ...newNode.style, opacity: 0, pointerEvents: 'none', zIndex: -1 };
+    } else {
+      const pos = positionMap.get(n.id) || { x: 0, y: 0 };
+      newNode.position = pos;
+      newNode.style = { ...newNode.style, opacity: 1, pointerEvents: 'auto', zIndex: n.type === 'folder' ? 10 : 20 };
+    }
     return newNode;
   });
 
-  // 2. Layout isolated nodes in folder clusters (circles)
-  const folderGroups: Record<string, Node[]> = {};
-  isolatedNodes.forEach(n => {
-    const lastSlash = Math.max(n.id.lastIndexOf('/'), n.id.lastIndexOf('\\'));
-    const folder = lastSlash >= 0 ? n.id.substring(0, lastSlash) : 'root';
-    if (!folderGroups[folder]) folderGroups[folder] = [];
-    folderGroups[folder].push(n);
-  });
-
-  let currentY = maxY > 0 ? maxY + 200 : 100;
-  let currentX = 0;
-  let rowMaxHeight = 0;
-  const MAX_WIDTH = 1200; // Force clusters to wrap after this width
-
-  Object.values(folderGroups).forEach(fNodes => {
-    const count = fNodes.length;
-    const cols = Math.ceil(Math.sqrt(count));
-    const paddingX = 40;
-    const paddingY = 40;
-
-    const clusterWidth = cols * (nodeWidth + paddingX);
-    const clusterHeight = Math.ceil(count / cols) * (nodeHeight + paddingY);
-
-    // Wrap to the next row if this cluster exceeds MAX_WIDTH (and we aren't at the start of a row)
-    if (currentX + clusterWidth > MAX_WIDTH && currentX > 0) {
-      currentX = 0;
-      currentY += rowMaxHeight + 80;
-      rowMaxHeight = 0;
-    }
-
-    fNodes.forEach((node, i) => {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      
-      const newNode = { ...node };
-      newNode.position = {
-        x: currentX + col * (nodeWidth + paddingX),
-        y: currentY + row * (nodeHeight + paddingY)
-      };
-      layoutedNodes.push(newNode);
-    });
-
-    currentX += clusterWidth + 80; // Horizontal gap between clusters
-    rowMaxHeight = Math.max(rowMaxHeight, clusterHeight);
-  });
-
-  return { nodes: layoutedNodes, edges };
+  return { nodes: finalNodes, edges: finalEdges };
 };

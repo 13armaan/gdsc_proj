@@ -1,5 +1,6 @@
-import { X } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft, FileText } from 'lucide-react';
 import { useGraphStore } from '../store/useGraphStore';
+import { useState } from 'react';
 
 const Sidebar = () => {
   const {
@@ -9,6 +10,8 @@ const Sidebar = () => {
     clearSelection,
   } = useGraphStore();
 
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
   if (!selectedNode) {
     return null;
   }
@@ -17,29 +20,43 @@ const Sidebar = () => {
   const filename = selectedNode.split(/[/\\]/).pop() || selectedNode;
 
   return (
-    <div className="fixed top-0 right-0 h-full w-96 bg-slate-800 border-l border-slate-700 shadow-2xl p-6 flex flex-col z-50 overflow-y-auto">
+    <div className={`fixed top-0 right-0 h-full bg-slate-800 border-l border-slate-700 shadow-2xl flex flex-col z-50 overflow-hidden transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-96'}`}>
+      
       {/* Header */}
-      <div className="flex items-start justify-between mb-6 pb-4 border-b border-slate-700">
-        <div className="flex-1 min-w-0 pr-4">
-          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-            Selected File
-          </h2>
-          <h1 className="text-lg font-mono font-bold text-slate-100 truncate break-all" title={selectedNode}>
-            {filename}
-          </h1>
-          <p className="text-xs text-slate-500 mt-1 truncate" title={selectedNode}>
-            {selectedNode}
-          </p>
+      <div className={`flex items-center justify-between p-4 border-b border-slate-700 ${isCollapsed ? 'flex-col gap-4' : ''}`}>
+        {!isCollapsed && (
+          <div className="flex-1 min-w-0 pr-2">
+            <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+              Selected File
+            </h2>
+            <h1 className="text-lg font-mono font-bold text-slate-100 truncate break-all" title={selectedNode}>
+              {filename}
+            </h1>
+          </div>
+        )}
+        
+        <div className={`flex ${isCollapsed ? 'flex-col' : ''} gap-2`}>
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-700 transition-colors flex-shrink-0"
+            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          >
+            {isCollapsed ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+          </button>
+          <button
+            onClick={clearSelection}
+            className="p-1.5 rounded-md text-slate-400 hover:text-red-400 hover:bg-slate-700 transition-colors flex-shrink-0"
+            title="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
-        <button
-          onClick={clearSelection}
-          className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-700 transition-colors flex-shrink-0"
-        >
-          <X className="w-5 h-5" />
-        </button>
       </div>
 
-      {/* Loading State */}
+      {/* Content Area - Hidden when collapsed */}
+      {!isCollapsed && (
+        <div className="flex-1 overflow-y-auto p-6 flex flex-col">
+          {/* Loading State */}
       {isSummaryLoading ? (
         <div className="flex-1 animate-pulse space-y-6 mt-4">
           <div className="space-y-3">
@@ -81,6 +98,8 @@ const Sidebar = () => {
         /* Error/Empty State */
         <div className="flex-1 flex items-center justify-center text-red-400">
           <p>Failed to load data for this file.</p>
+        </div>
+      )}
         </div>
       )}
     </div>

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -8,13 +8,15 @@ import ReactFlow, {
   useReactFlow
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Loader2, FolderSearch, AlertCircle, Waypoints } from 'lucide-react';
+import { Search, Loader2, FolderSearch, AlertCircle, Waypoints, ChevronUp, ChevronDown } from 'lucide-react';
 import { useGraphStore } from './store/useGraphStore';
 import FileNode from './components/FileNode';
+import FolderNode from './components/FolderNode';
 import Sidebar from './components/Sidebar';
 
 const nodeTypes = {
   file: FileNode,
+  folder: FolderNode,
 };
 
 const AppContent = () => {
@@ -28,57 +30,140 @@ const AppContent = () => {
     fetchGraph,
     onNodesChange,
     onEdgesChange,
-    fetchSummary
+    fetchSummary,
+    selectedNode
   } = useGraphStore();
 
-  const { fitView } = useReactFlow();
+  const { fitView, setCenter } = useReactFlow();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Node[]>([]);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+
+  // Update search results whenever query changes
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setFocusedIndex(-1);
+      return;
+    }
+    const matches = nodes.filter(n => n.id.toLowerCase().includes(searchQuery.toLowerCase()));
+    setSearchResults(matches);
+    setFocusedIndex(-1);
+  }, [searchQuery, nodes]);
 
   const handleScan = async () => {
     if (!scanTarget.trim()) return;
     await fetchGraph();
-    // Allow a brief moment for React Flow to render the new nodes before animating the zoom
     setTimeout(() => {
       fitView({ padding: 0.2, duration: 800 });
     }, 100);
   };
 
+  const handleNodeSearch = (e?: React.FormEvent, direction: 'next' | 'prev' = 'next') => {
+    if (e) e.preventDefault();
+    if (searchResults.length === 0) return;
+    
+    let targetIndex = 0;
+    if (focusedIndex === -1) {
+      targetIndex = direction === 'next' ? 0 : searchResults.length - 1;
+    } else {
+      if (direction === 'next') {
+        targetIndex = (focusedIndex + 1) % searchResults.length;
+      } else {
+        targetIndex = focusedIndex - 1 < 0 ? searchResults.length - 1 : focusedIndex - 1;
+      }
+    }
+    
+    setFocusedIndex(targetIndex);
+    const targetNode = searchResults[targetIndex];
+    
+    if (targetNode) {
+      const x = targetNode.position.x + (targetNode.width || 200) / 2;
+      const y = targetNode.position.y + (targetNode.height || 60) / 2;
+      setCenter(x, y, { zoom: 1.5, duration: 800 });
+      if (targetNode.type !== 'folder') {
+        fetchSummary(targetNode.id);
+      }
+    }
+  };
+
   const handleNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
+      if (node.type === 'folder') return;
       fetchSummary(node.id);
     },
     [fetchSummary]
   );
 
-
-
   return (
-    <div className="h-screen w-screen flex overflow-hidden bg-slate-900 text-slate-100 font-sans">
+    <div className="h-screen w-screen flex flex-col overflow-hidden bg-slate-900 text-slate-100 font-sans">
       
-      {/* Floating Control Panel */}
-      <div className="absolute top-4 left-4 z-50 bg-slate-800/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-slate-700 flex items-center gap-3">
-        <div className="flex items-center bg-slate-900 rounded-lg px-3 py-2 border border-slate-700 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/50 transition-all">
-          <FolderSearch className="w-5 h-5 text-slate-400 mr-2" />
-          <input
-            type="text"
-            placeholder="Enter absolute directory path..."
-            className="bg-transparent border-none outline-none text-sm w-80 text-white placeholder-slate-500"
-            value={scanTarget}
-            onChange={(e) => setScanTarget(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleScan()}
-          />
+      {/* Dedicated Header Bar */}
+      <header className="w-full bg-slate-800/95 border-b border-slate-700/80 px-6 py-3 flex items-center justify-between z-50 shadow-md flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <Waypoints className="w-6 h-6 text-blue-500" />
+          <h1 className="font-bold text-lg tracking-wide text-slate-100">RepoMap<span className="text-blue-500">Analyzer</span></h1>
         </div>
-        <button
-          onClick={handleScan}
-          disabled={isLoading || !scanTarget.trim()}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-5 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-2"
-        >
-          {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-          {isLoading ? 'Scanning...' : 'Scan Repo'}
-        </button>
-      </div>
+
+        <div className="flex items-center gap-4">
+          <div className="bg-slate-900/50 px-3 py-1.5 rounded-xl border border-slate-700/50 flex items-center gap-2">
+            <div className="flex items-center bg-slate-800 rounded-lg px-2 py-1 border border-slate-600 focus-within:border-blue-500/80 focus-within:ring-1 focus-within:ring-blue-500/20 transition-all">
+              <FolderSearch className="w-4 h-4 text-blue-400 mr-2" />
+              <input
+                type="text"
+                placeholder="Absolute path..."
+                className="bg-transparent border-none outline-none text-xs w-64 text-slate-200 placeholder-slate-500"
+                value={scanTarget}
+                onChange={(e) => setScanTarget(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleScan()}
+              />
+            </div>
+            <button
+              onClick={handleScan}
+              disabled={isLoading || !scanTarget.trim()}
+              className="bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white px-3 py-1 rounded-lg font-medium text-xs transition-all flex items-center gap-1.5 shadow-sm"
+            >
+              {isLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+              {isLoading ? 'Scanning...' : 'Scan'}
+            </button>
+          </div>
+
+          {nodes.length > 0 && (
+            <form onSubmit={(e) => handleNodeSearch(e)} className="bg-slate-900/50 px-3 py-1.5 rounded-xl border border-slate-700/50 flex items-center gap-2 transition-all duration-300">
+              <div className="flex items-center bg-slate-800 rounded-lg px-2 py-1 border border-slate-600 focus-within:border-purple-500/80 focus-within:ring-1 focus-within:ring-purple-500/20 transition-all">
+                <Search className="w-4 h-4 text-purple-400 mr-2" />
+                <input
+                  type="text"
+                  placeholder="Search file..."
+                  className="bg-transparent border-none outline-none text-xs w-48 text-slate-200 placeholder-slate-500"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                {searchResults.length > 0 && (
+                  <span className="text-[10px] text-slate-400 ml-2 font-mono whitespace-nowrap">
+                    {focusedIndex === -1 ? 0 : focusedIndex + 1} / {searchResults.length}
+                  </span>
+                )}
+              </div>
+              
+              {searchResults.length > 0 && (
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={() => handleNodeSearch(undefined, 'prev')} className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-white transition-colors" title="Previous match">
+                    <ChevronUp className="w-4 h-4" />
+                  </button>
+                  <button type="button" onClick={() => handleNodeSearch(undefined, 'next')} className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-white transition-colors" title="Next match (Enter)">
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+              <button type="submit" className="hidden">Search</button>
+            </form>
+          )}
+        </div>
+      </header>
 
       {/* Main Canvas Area */}
-      <div className="flex-1 h-full relative">
+      <div className="flex-1 w-full relative">
         {isLoading && (
           <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-sm">
             <Loader2 className="w-12 h-12 animate-spin text-blue-500 mb-4" />
@@ -111,16 +196,17 @@ const AppContent = () => {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onNodeClick={handleNodeClick}
+            minZoom={0.05}
             fitView
             fitViewOptions={{ maxZoom: 1.2, padding: 0.2 }}
           >
-            <Background color="#334155" variant="dots" gap={20} size={2} />
+            <Background color="#1e293b" variant="dots" gap={24} size={1.5} />
             <Controls className="bg-slate-800 border-slate-700 fill-slate-200" />
             <MiniMap 
               nodeStrokeColor="#334155" 
               nodeColor="#1e293b" 
-              maskColor="rgba(15, 23, 42, 0.8)" 
-              style={{ backgroundColor: '#0f172a', border: '1px solid #334155' }} 
+              maskColor="rgba(15, 23, 42, 0.85)" 
+              style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b' }} 
             />
           </ReactFlow>
         )}
