@@ -64,7 +64,7 @@ const ImportEdge = ({
               pointerEvents: 'none',
               zIndex: 1000,
             }}
-            className="bg-slate-800 text-green-400 font-mono text-[10px] px-2 py-1 rounded border border-slate-600 shadow-lg"
+            className="bg-stone-800 text-green-400 font-mono text-[10px] px-2 py-1 rounded border border-stone-600 shadow-lg"
           >
             {statement}
           </div>
