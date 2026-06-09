@@ -188,18 +188,18 @@ const AppContent = () => {
   }, []);
 
   return (
-    <div className="h-screen w-screen flex flex-col overflow-hidden bg-slate-900 text-slate-100 font-sans">
+    <div className="h-screen w-screen flex flex-col overflow-hidden bg-stone-900 text-stone-100 font-sans">
       
       {/* Dedicated Header Bar */}
-      <header className="w-full bg-slate-800/95 border-b border-slate-700/80 px-6 py-3 flex items-center justify-between z-50 shadow-md flex-shrink-0">
+      <header className="w-full bg-stone-800/95 border-b border-stone-700/80 px-6 py-3 flex items-center justify-between z-50 shadow-md flex-shrink-0">
         <div className="flex items-center gap-3 select-none cursor-default">
-          <Waypoints className="w-6 h-6 text-blue-500" />
-          <h1 className="font-bold text-lg tracking-wide text-slate-100">RepoMap<span className="text-blue-500">Analyzer</span></h1>
+          <Waypoints className="w-6 h-6 text-amber-500" />
+          <h1 className="font-bold text-lg tracking-wide text-stone-100">RepoMap<span className="text-amber-500">Analyzer</span></h1>
         </div>
 
         <div className="flex items-center gap-4">
           {nodes.length > 0 && (
-            <div className="flex items-center bg-slate-900/50 p-1 rounded-xl border border-slate-700/50">
+            <div className="flex items-center bg-stone-900/50 p-1 rounded-xl border border-stone-700/50">
               {(['file', 'folder', 'module'] as const).map(mode => (
                 <button
                   key={mode}
@@ -208,7 +208,7 @@ const AppContent = () => {
                       setTimeout(() => fitView({ padding: 0.2, duration: 800 }), 100);
                     });
                   }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-all duration-200 ${currentViewMode === mode ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-all duration-200 ${currentViewMode === mode ? 'bg-amber-600 text-white shadow-md' : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800'}`}
                 >
                   {mode}
                 </button>
@@ -216,13 +216,13 @@ const AppContent = () => {
             </div>
           )}
 
-          <div className="bg-slate-900/50 px-3 py-1.5 rounded-xl border border-slate-700/50 flex items-center gap-2">
-            <div className="flex items-center bg-slate-800 rounded-lg px-2 py-1 border border-slate-600 focus-within:border-blue-500/80 focus-within:ring-1 focus-within:ring-blue-500/20 transition-all">
-              <FolderSearch className="w-4 h-4 text-blue-400 mr-2" />
+          <div className="bg-stone-900/50 px-3 py-1.5 rounded-xl border border-stone-700/50 flex items-center gap-2">
+            <div className="flex items-center bg-stone-800 rounded-lg px-2 py-1 border border-stone-600 focus-within:border-amber-500/80 focus-within:ring-1 focus-within:ring-amber-500/20 transition-all">
+              <FolderSearch className="w-4 h-4 text-amber-400 mr-2" />
               <input
                 type="text"
                 placeholder="Absolute path..."
-                className="bg-transparent border-none outline-none text-xs w-64 text-slate-200 placeholder-slate-500"
+                className="bg-transparent border-none outline-none text-xs w-64 text-stone-200 placeholder-stone-500"
                 value={scanTarget}
                 onChange={(e) => setScanTarget(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleScan()}
@@ -231,7 +231,7 @@ const AppContent = () => {
                 <button 
                   type="button"
                   onClick={handleInputFocus}
-                  className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-blue-400 transition-colors ml-1"
+                  className="p-1 hover:bg-stone-700 rounded text-stone-400 hover:text-amber-400 transition-colors ml-1"
                   title="Auto-Paste Path"
                 >
                   <ClipboardPaste className="w-3.5 h-3.5" />
@@ -241,7 +241,7 @@ const AppContent = () => {
             <button
               onClick={handleScan}
               disabled={isLoading || !scanTarget.trim()}
-              className="bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white px-3 py-1 rounded-lg font-medium text-xs transition-all flex items-center gap-1.5 shadow-sm"
+              className="bg-amber-600 hover:bg-amber-500 disabled:bg-stone-700 disabled:text-stone-500 text-white px-3 py-1 rounded-lg font-medium text-xs transition-all flex items-center gap-1.5 shadow-sm"
             >
               {isLoading && <Loader2 className="w-3 h-3 animate-spin" />}
               {isLoading ? 'Scanning...' : 'Scan'}
@@ -251,35 +251,35 @@ const AppContent = () => {
           {nodes.length > 0 && (
             <>
               <div className="flex items-center gap-2">
-                <button onClick={expandAllFolders} className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700/50 flex items-center gap-1.5 text-xs font-medium transition-colors" title="Expand All">
+                <button onClick={expandAllFolders} className="bg-stone-800 hover:bg-stone-700 text-stone-300 px-3 py-1.5 rounded-lg border border-stone-700/50 flex items-center gap-1.5 text-xs font-medium transition-colors" title="Expand All">
                   <Maximize2 className="w-3.5 h-3.5" />
                 </button>
-                <button onClick={collapseAllFolders} className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700/50 flex items-center gap-1.5 text-xs font-medium transition-colors" title="Collapse All">
+                <button onClick={collapseAllFolders} className="bg-stone-800 hover:bg-stone-700 text-stone-300 px-3 py-1.5 rounded-lg border border-stone-700/50 flex items-center gap-1.5 text-xs font-medium transition-colors" title="Collapse All">
                   <Minimize2 className="w-3.5 h-3.5" />
                 </button>
-                <div className="w-px h-6 bg-slate-700 mx-1"></div>
-                <button onClick={toggleAnalytics} className={`px-3 py-1.5 rounded-lg border flex items-center gap-1.5 text-xs font-medium transition-all duration-200 ${isAnalyticsOpen ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-slate-800 hover:bg-slate-700 border-slate-700/50 text-slate-300'}`} title="View Insights">
+                <div className="w-px h-6 bg-stone-700 mx-1"></div>
+                <button onClick={toggleAnalytics} className={`px-3 py-1.5 rounded-lg border flex items-center gap-1.5 text-xs font-medium transition-all duration-200 ${isAnalyticsOpen ? 'bg-teal-600 border-teal-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-stone-800 hover:bg-stone-700 border-stone-700/50 text-stone-300'}`} title="View Insights">
                   <BarChart2 className="w-3.5 h-3.5" />
                   Insights
                 </button>
-                <button onClick={toggleStatsModal} className={`px-3 py-1.5 rounded-lg border flex items-center gap-1.5 text-xs font-medium transition-all duration-200 ${isStatsModalOpen ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/20' : 'bg-slate-800 hover:bg-slate-700 border-slate-700/50 text-slate-300'}`} title="View Dashboard">
+                <button onClick={toggleStatsModal} className={`px-3 py-1.5 rounded-lg border flex items-center gap-1.5 text-xs font-medium transition-all duration-200 ${isStatsModalOpen ? 'bg-amber-600 border-amber-500 text-white shadow-lg shadow-blue-500/20' : 'bg-stone-800 hover:bg-stone-700 border-stone-700/50 text-stone-300'}`} title="View Dashboard">
                   <LayoutDashboard className="w-3.5 h-3.5" />
                   Dashboard
                 </button>
               </div>
 
-              <form onSubmit={(e) => handleNodeSearch(e)} className="bg-slate-900/50 px-3 py-1.5 rounded-xl border border-slate-700/50 flex items-center gap-2 transition-all duration-300 relative">
-              <div className="flex items-center bg-slate-800 rounded-lg px-2 py-1 border border-slate-600 focus-within:border-purple-500/80 focus-within:ring-1 focus-within:ring-purple-500/20 transition-all">
-                <Search className="w-4 h-4 text-purple-400 mr-2" />
+              <form onSubmit={(e) => handleNodeSearch(e)} className="bg-stone-900/50 px-3 py-1.5 rounded-xl border border-stone-700/50 flex items-center gap-2 transition-all duration-300 relative">
+              <div className="flex items-center bg-stone-800 rounded-lg px-2 py-1 border border-stone-600 focus-within:border-rose-500/80 focus-within:ring-1 focus-within:ring-rose-500/20 transition-all">
+                <Search className="w-4 h-4 text-rose-400 mr-2" />
                 <input
                   type="text"
                   placeholder="Search file..."
-                  className="bg-transparent border-none outline-none text-xs w-48 text-slate-200 placeholder-slate-500"
+                  className="bg-transparent border-none outline-none text-xs w-48 text-stone-200 placeholder-stone-500"
                   value={localSearchQuery}
                   onChange={(e) => setLocalSearchQuery(e.target.value)}
                 />
                 {searchResults.length > 0 ? (
-                  <span className="text-[10px] text-slate-400 ml-2 font-mono whitespace-nowrap">
+                  <span className="text-[10px] text-stone-400 ml-2 font-mono whitespace-nowrap">
                     {focusedIndex === -1 ? 0 : focusedIndex + 1} / {searchResults.length}
                   </span>
                 ) : (localSearchQuery.trim() && searchError) ? (
@@ -297,10 +297,10 @@ const AppContent = () => {
               
               {searchResults.length > 0 && (
                 <div className="flex items-center gap-1">
-                  <button type="button" onClick={() => handleNodeSearch(undefined, 'prev')} className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-white transition-colors" title="Previous match">
+                  <button type="button" onClick={() => handleNodeSearch(undefined, 'prev')} className="p-1 hover:bg-stone-700 rounded text-stone-400 hover:text-white transition-colors" title="Previous match">
                     <ChevronUp className="w-4 h-4" />
                   </button>
-                  <button type="button" onClick={() => handleNodeSearch(undefined, 'next')} className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-white transition-colors" title="Next match (Enter)">
+                  <button type="button" onClick={() => handleNodeSearch(undefined, 'next')} className="p-1 hover:bg-stone-700 rounded text-stone-400 hover:text-white transition-colors" title="Next match (Enter)">
                     <ChevronDown className="w-4 h-4" />
                   </button>
                 </div>
@@ -315,28 +315,28 @@ const AppContent = () => {
       {/* Main Canvas Area */}
       <div className="flex-1 w-full relative caret-transparent">
         {isLoading && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm pointer-events-none caret-transparent">
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-stone-900/80 backdrop-blur-sm pointer-events-none caret-transparent">
             <div className="flex flex-col items-center select-none cursor-default">
-              <Loader2 className="w-12 h-12 animate-spin text-blue-500 mb-4 outline-none" strokeWidth={1.5} />
-              <h2 className="text-xl font-medium text-slate-200">Analyzing Repository...</h2>
-              <p className="text-slate-400 mt-2 text-sm">Building graph nodes and edges</p>
+              <Loader2 className="w-12 h-12 animate-spin text-amber-500 mb-4 outline-none" strokeWidth={1.5} />
+              <h2 className="text-xl font-medium text-stone-200">Analyzing Repository...</h2>
+              <p className="text-stone-400 mt-2 text-sm">Building graph nodes and edges</p>
             </div>
           </div>
         )}
         {scanError ? (
           <div className="absolute inset-0 z-40 flex flex-col items-center justify-center pointer-events-none">
-            <div className="bg-slate-800/80 backdrop-blur-md p-8 rounded-2xl border border-red-500/30 flex flex-col items-center text-center max-w-md shadow-2xl">
+            <div className="bg-stone-800/80 backdrop-blur-md p-8 rounded-2xl border border-red-500/30 flex flex-col items-center text-center max-w-md shadow-2xl">
               <AlertCircle className="w-16 h-16 text-red-400 mb-4 opacity-90" />
               <p className="text-xl font-semibold text-red-400 mb-2">{scanError}</p>
-              <p className="text-sm text-slate-400">Directory not found or access denied. Please check the path and try again.</p>
+              <p className="text-sm text-stone-400">Directory not found or access denied. Please check the path and try again.</p>
             </div>
           </div>
         ) : nodes.length === 0 && !isLoading ? (
           <div className="absolute inset-0 z-40 flex flex-col items-center justify-center pointer-events-none caret-transparent">
             <div className="flex flex-col items-center text-center opacity-60 select-none cursor-default pointer-events-none caret-transparent">
-              <Map className="w-24 h-24 text-slate-500 mb-6 outline-none" strokeWidth={1.5} />
-              <h2 className="text-2xl font-medium text-slate-300 mb-3">Ready to map your architecture</h2>
-              <p className="text-slate-400 max-w-md text-base leading-relaxed">
+              <Map className="w-24 h-24 text-stone-500 mb-6 outline-none" strokeWidth={1.5} />
+              <h2 className="text-2xl font-medium text-stone-300 mb-3">Ready to map your architecture</h2>
+              <p className="text-stone-400 max-w-md text-base leading-relaxed">
                 Enter a local repository path above and click Scan Repo to begin visualizing your codebase.
               </p>
             </div>
@@ -358,7 +358,7 @@ const AppContent = () => {
             proOptions={{ hideAttribution: true }}
           >
             <Background color="#1e293b" variant="dots" gap={24} size={1.5} />
-            <Controls className="bg-slate-800 border-slate-700 fill-slate-200" />
+            <Controls className="bg-stone-800 border-stone-700 fill-stone-200" />
           </ReactFlow>
         )}
       </div>
