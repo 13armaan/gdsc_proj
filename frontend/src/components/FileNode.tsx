@@ -14,17 +14,17 @@ const getFileIcon = (ext: string) => {
   switch (ext.toLowerCase()) {
     case 'ts':
     case 'tsx':
-      return <FileCode2 className="w-5 h-5 text-blue-400" />;
+      return <FileCode2 className="w-5 h-5 text-amber-400" />;
     case 'js':
     case 'jsx':
       return <Braces className="w-5 h-5 text-yellow-400" />;
     case 'py':
-      return <Terminal className="w-5 h-5 text-blue-300" />;
+      return <Terminal className="w-5 h-5 text-amber-300" />;
     case 'cpp':
     case 'h':
     case 'hpp':
     case 'cc':
-      return <Cpu className="w-5 h-5 text-blue-500" />;
+      return <Cpu className="w-5 h-5 text-amber-500" />;
     case 'go':
       return <Zap className="w-5 h-5 text-sky-400" />;
     case 'java':
@@ -35,7 +35,7 @@ const getFileIcon = (ext: string) => {
       return <FileJson className="w-5 h-5 text-green-400" />;
     case 'md':
     case 'txt':
-      return <FileText className="w-5 h-5 text-slate-400" />;
+      return <FileText className="w-5 h-5 text-stone-400" />;
     case 'env':
     case 'config':
     case 'toml':
@@ -43,7 +43,7 @@ const getFileIcon = (ext: string) => {
     case 'yml':
       return <Settings className="w-5 h-5 text-orange-400" />;
     default:
-      return <File className="w-5 h-5 text-slate-400" />;
+      return <File className="w-5 h-5 text-stone-400" />;
   }
 };
 
@@ -54,8 +54,8 @@ const getSemanticColors = (filename: string, selected: boolean) => {
   
   if (name.includes('test') || name.includes('spec')) {
     return selected 
-      ? 'bg-purple-900/40 border-purple-400 shadow-purple-500/20' 
-      : 'bg-purple-900/10 border-purple-800/50 hover:border-purple-500/50';
+      ? 'bg-rose-900/40 border-rose-400 shadow-purple-500/20' 
+      : 'bg-rose-900/10 border-rose-800/50 hover:border-rose-500/50';
   }
   if (['package.json', 'vite.config', '.env', 'tsconfig', 'tailwind', 'config'].some(c => name.includes(c))) {
     return selected 
@@ -69,10 +69,10 @@ const getSemanticColors = (filename: string, selected: boolean) => {
   }
   
   if (ext === 'py') {
-    return selected ? 'bg-blue-900/40 border-blue-400 shadow-blue-500/20' : 'bg-blue-900/10 border-blue-400 hover:border-blue-300';
+    return selected ? 'bg-amber-900/40 border-amber-400 shadow-blue-500/20' : 'bg-amber-900/10 border-amber-400 hover:border-amber-300';
   }
   if (ext === 'cpp' || ext === 'h' || ext === 'hpp' || ext === 'cc') {
-    return selected ? 'bg-blue-950/40 border-blue-600 shadow-blue-600/20' : 'bg-blue-950/20 border-blue-700 hover:border-blue-500';
+    return selected ? 'bg-amber-950/40 border-amber-600 shadow-blue-600/20' : 'bg-amber-950/20 border-amber-700 hover:border-amber-500';
   }
   if (ext === 'go') {
     return selected ? 'bg-sky-900/40 border-sky-400 shadow-sky-400/20' : 'bg-sky-900/10 border-sky-400 hover:border-sky-300';
@@ -86,8 +86,8 @@ const getSemanticColors = (filename: string, selected: boolean) => {
 
   // Default Gray for standard files
   return selected 
-    ? 'bg-slate-800/90 border-slate-300 shadow-slate-500/20' 
-    : 'bg-slate-800/60 border-slate-700/80 hover:border-slate-500/80';
+    ? 'bg-stone-800/90 border-stone-300 shadow-slate-500/20' 
+    : 'bg-stone-800/60 border-stone-700/80 hover:border-stone-500/80';
 };
 
 const FileNode = ({ data, selected }: NodeProps<FileNodeData>) => {
@@ -100,16 +100,16 @@ const FileNode = ({ data, selected }: NodeProps<FileNodeData>) => {
     >
       <Handle type="target" position={Position.Top} className="opacity-0 w-0 h-0" />
       
-      <div className="flex items-center justify-center bg-black/20 p-1.5 rounded-md shadow-inner">
+      <div className="flex items-center justify-center bg-stone-900/40 p-1.5 rounded-md shadow-inner">
         {getFileIcon(ext)}
       </div>
 
       <div className="flex flex-col min-w-0 flex-1 justify-center">
-        <span className="text-[13px] font-mono font-medium text-slate-100 truncate leading-tight tracking-tight" title={data.label}>
+        <span className="text-[13px] font-mono font-medium text-stone-100 truncate leading-tight tracking-tight" title={data.label}>
           {filename}
         </span>
         {data.loc !== undefined && (
-          <span className="text-[10px] text-slate-400/80 font-medium leading-tight mt-0.5 flex items-center gap-1">
+          <span className="text-[10px] text-stone-400/80 font-medium leading-tight mt-0.5 flex items-center gap-1">
             {data.loc} LoC
             {data.heavyNodeCount !== undefined && data.heavyNodeCount > 5 && (
               <span className="flex items-center text-orange-500" title={`Heavy Dependency: ${data.heavyNodeCount} Descendants`}>
