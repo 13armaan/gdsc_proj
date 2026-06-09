@@ -9,14 +9,14 @@ html, body, #root {
 
 /* React Flow Dark Theme Overrides */
 .react-flow__controls-button {
-  background-color: #1e293b !important;
-  border-bottom: 1px solid #334155 !important;
-  fill: #e2e8f0 !important;
+  background-color: #292524 !important;
+  border-bottom: 1px solid #44403c !important;
+  fill: #e7e5e4 !important;
   transition: background-color 0.2s;
 }
 
 .react-flow__controls-button:hover {
-  background-color: #334155 !important;
+  background-color: #44403c !important;
 }
 
 .react-flow__node {
