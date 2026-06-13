@@ -5,9 +5,9 @@ import { Layers } from 'lucide-react';
 function GroupNode({ data }: any) {
   return (
     <div className="w-full h-full relative group">
-      <div className="absolute top-0 left-0 right-0 h-10 px-3 flex items-center gap-2 border-b border-slate-700/50 bg-slate-800/80 rounded-t-lg">
-        <Layers className="w-4 h-4 text-indigo-400" />
-        <span className="font-semibold text-xs text-slate-300 uppercase tracking-wider">{data.label}</span>
+      <div className="absolute top-0 left-0 right-0 h-10 px-3 flex items-center gap-2 border-b border-stone-700/50 bg-stone-800/80 rounded-t-lg">
+        <Layers className="w-4 h-4 text-teal-400" />
+        <span className="font-semibold text-xs text-stone-300 uppercase tracking-wider">{data.label}</span>
       </div>
       
       {/* Invisible handles to allow edges to target the group itself if needed */}

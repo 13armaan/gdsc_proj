@@ -73,26 +73,26 @@ export default function StatisticsModal() {
   if (!isStatsModalOpen || !statistics || !chartData) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/95 backdrop-blur-md overflow-y-auto p-6 md:p-10 flex flex-col font-sans">
+    <div className="fixed inset-0 z-50 bg-stone-900/95 backdrop-blur-md overflow-y-auto p-6 md:p-10 flex flex-col font-sans">
       
       {/* Header */}
-      <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-700/80">
+      <div className="flex items-center justify-between mb-8 pb-4 border-b border-stone-700/80">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-blue-500/20 rounded-xl">
-            <LayoutDashboard className="w-8 h-8 text-blue-400" />
+          <div className="p-2.5 bg-amber-500/20 rounded-xl">
+            <LayoutDashboard className="w-8 h-8 text-amber-400" />
           </div>
           <div>
-            <h2 className="text-3xl font-bold text-slate-100 tracking-tight">Codebase Dashboard</h2>
-            <p className="text-slate-400 mt-1 flex items-center gap-2">
+            <h2 className="text-3xl font-bold text-stone-100 tracking-tight">Codebase Dashboard</h2>
+            <p className="text-stone-400 mt-1 flex items-center gap-2">
               <HardDrive className="w-4 h-4" /> 
-              Avg File Size: <span className="font-semibold text-slate-200">{formatBytes(statistics.average_file_size_bytes)}</span>
+              Avg File Size: <span className="font-semibold text-stone-200">{formatBytes(statistics.average_file_size_bytes)}</span>
             </p>
           </div>
         </div>
         
         <button 
           onClick={toggleStatsModal}
-          className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2.5 rounded-xl border border-slate-700/50 transition-all shadow-sm"
+          className="flex items-center gap-2 bg-stone-800 hover:bg-stone-700 text-stone-300 px-4 py-2.5 rounded-xl border border-stone-700/50 transition-all shadow-sm"
         >
           <span className="font-medium">Close Dashboard</span>
           <X className="w-5 h-5" />
@@ -103,10 +103,10 @@ export default function StatisticsModal() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 flex-1">
         
         {/* Language Distribution */}
-        <div className="bg-slate-800/60 rounded-2xl border border-slate-700/50 p-6 flex flex-col shadow-xl">
+        <div className="bg-stone-800/60 rounded-2xl border border-stone-700/50 p-6 flex flex-col shadow-xl">
           <div className="flex items-center gap-2 mb-6">
-            <Code className="w-5 h-5 text-purple-400" />
-            <h3 className="text-lg font-semibold text-slate-200">Language Distribution</h3>
+            <Code className="w-5 h-5 text-rose-400" />
+            <h3 className="text-lg font-semibold text-stone-200">Language Distribution</h3>
           </div>
           <div className="flex-1 min-h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -131,13 +131,13 @@ export default function StatisticsModal() {
                       const data = payload[0].payload;
                       const percentage = ((data.value / chartData.totalBytes) * 100).toFixed(1);
                       return (
-                        <div className="bg-slate-800 border border-slate-600 rounded-lg p-3 shadow-xl">
-                          <p className="text-slate-200 font-semibold mb-1 flex items-center gap-2">
+                        <div className="bg-stone-800 border border-stone-600 rounded-lg p-3 shadow-xl">
+                          <p className="text-stone-200 font-semibold mb-1 flex items-center gap-2">
                             <span className="w-3 h-3 rounded-full" style={{ backgroundColor: payload[0].color }} />
                             {data.name}
                           </p>
-                          <p className="text-slate-400 text-sm ml-5">
-                            {percentage}% <span className="text-slate-500 mx-1">•</span> {formatBytes(data.value)}
+                          <p className="text-stone-400 text-sm ml-5">
+                            {percentage}% <span className="text-stone-500 mx-1">•</span> {formatBytes(data.value)}
                           </p>
                         </div>
                       );
@@ -150,14 +150,14 @@ export default function StatisticsModal() {
                   verticalAlign="middle" 
                   align="right"
                   content={({ payload }) => (
-                    <div className="bg-slate-900/80 border border-slate-700/80 rounded-xl p-1 shadow-lg ml-2 max-h-[260px] overflow-y-auto hidden md:block">
+                    <div className="bg-stone-900/80 border border-stone-700/80 rounded-xl p-1 shadow-lg ml-2 max-h-[260px] overflow-y-auto hidden md:block">
                       <table className="w-full text-left text-sm">
                         <tbody>
                           {(payload || []).map((entry: any, index: number) => (
-                            <tr key={`item-${index}`} className="border-b border-slate-800 last:border-0 hover:bg-slate-800/50 transition-colors">
+                            <tr key={`item-${index}`} className="border-b border-stone-800 last:border-0 hover:bg-stone-800/50 transition-colors">
                               <td className="py-2.5 px-3 flex items-center gap-2.5">
                                 <div className="w-3 h-3 rounded-sm shadow-sm" style={{ backgroundColor: entry.color }} />
-                                <span className="text-slate-300 font-medium whitespace-nowrap">{entry.value}</span>
+                                <span className="text-stone-300 font-medium whitespace-nowrap">{entry.value}</span>
                               </td>
                             </tr>
                           ))}
@@ -172,10 +172,10 @@ export default function StatisticsModal() {
         </div>
 
         {/* Repository Growth */}
-        <div className="bg-slate-800/60 rounded-2xl border border-slate-700/50 p-6 flex flex-col shadow-xl">
+        <div className="bg-stone-800/60 rounded-2xl border border-stone-700/50 p-6 flex flex-col shadow-xl">
           <div className="flex items-center gap-2 mb-6">
             <GitCommit className="w-5 h-5 text-green-400" />
-            <h3 className="text-lg font-semibold text-slate-200">Repository Growth</h3>
+            <h3 className="text-lg font-semibold text-stone-200">Repository Growth</h3>
           </div>
           <div className="flex-1 min-h-[300px]">
             {chartData.growthData.length > 0 ? (
@@ -198,7 +198,7 @@ export default function StatisticsModal() {
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-slate-500">
+              <div className="h-full flex items-center justify-center text-stone-500">
                 Not enough git history found.
               </div>
             )}
@@ -206,14 +206,14 @@ export default function StatisticsModal() {
         </div>
 
         {/* Top 10 Largest Files */}
-        <div className="bg-slate-800/60 rounded-2xl border border-slate-700/50 p-6 flex flex-col shadow-xl overflow-hidden">
+        <div className="bg-stone-800/60 rounded-2xl border border-stone-700/50 p-6 flex flex-col shadow-xl overflow-hidden">
           <div className="flex items-center gap-2 mb-6">
             <HardDrive className="w-5 h-5 text-orange-400" />
-            <h3 className="text-lg font-semibold text-slate-200">Top 10 Largest Files</h3>
+            <h3 className="text-lg font-semibold text-stone-200">Top 10 Largest Files</h3>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-300">
-              <thead className="text-xs uppercase bg-slate-900/50 text-slate-400 border-b border-slate-700">
+            <table className="w-full text-left text-sm text-stone-300">
+              <thead className="text-xs uppercase bg-stone-900/50 text-stone-400 border-b border-stone-700">
                 <tr>
                   <th scope="col" className="px-4 py-3 rounded-tl-lg">File Path</th>
                   <th scope="col" className="px-4 py-3 rounded-tr-lg text-right">Size</th>
@@ -221,11 +221,11 @@ export default function StatisticsModal() {
               </thead>
               <tbody>
                 {(statistics.largest_files || []).map((file: any, i: number) => (
-                  <tr key={i} className="border-b border-slate-700/50 last:border-0 hover:bg-slate-700/30 transition-colors">
+                  <tr key={i} className="border-b border-stone-700/50 last:border-0 hover:bg-stone-700/30 transition-colors">
                     <td className="px-4 py-3 font-mono text-xs truncate max-w-[300px]" title={file.file_path}>
                       {file.file_path.split(/[\/\\]/).pop()}
                     </td>
-                    <td className="px-4 py-3 text-right font-medium text-slate-200 whitespace-nowrap">
+                    <td className="px-4 py-3 text-right font-medium text-stone-200 whitespace-nowrap">
                       {formatBytes(file.size_bytes)}
                     </td>
                   </tr>
@@ -239,39 +239,39 @@ export default function StatisticsModal() {
         <div className="flex flex-col gap-8">
           
           {/* Contribution Stats Card */}
-          <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 rounded-2xl border border-indigo-500/30 p-6 flex items-center justify-between shadow-xl">
+          <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 rounded-2xl border border-teal-500/30 p-6 flex items-center justify-between shadow-xl">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-indigo-500/20 rounded-full">
-                <Users className="w-6 h-6 text-indigo-300" />
+              <div className="p-3 bg-teal-500/20 rounded-full">
+                <Users className="w-6 h-6 text-teal-300" />
               </div>
               <div>
-                <p className="text-sm font-medium text-indigo-200/80 uppercase tracking-wider mb-1">Total Contributors</p>
+                <p className="text-sm font-medium text-teal-200/80 uppercase tracking-wider mb-1">Total Contributors</p>
                 <p className="text-3xl font-bold text-white">{chartData.totalAuthors}</p>
               </div>
             </div>
             
-            <div className="h-12 w-px bg-indigo-500/30 mx-4"></div>
+            <div className="h-12 w-px bg-teal-500/30 mx-4"></div>
             
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-purple-500/20 rounded-full">
-                <Calendar className="w-6 h-6 text-purple-300" />
+              <div className="p-3 bg-rose-500/20 rounded-full">
+                <Calendar className="w-6 h-6 text-rose-300" />
               </div>
               <div>
-                <p className="text-sm font-medium text-purple-200/80 uppercase tracking-wider mb-1">Most Active Date</p>
+                <p className="text-sm font-medium text-rose-200/80 uppercase tracking-wider mb-1">Most Active Date</p>
                 <p className="text-xl font-bold text-white">{chartData.mostActiveDate}</p>
               </div>
             </div>
           </div>
 
           {/* Top 10 Complex Files */}
-          <div className="bg-slate-800/60 rounded-2xl border border-slate-700/50 p-6 flex-1 shadow-xl overflow-hidden">
+          <div className="bg-stone-800/60 rounded-2xl border border-stone-700/50 p-6 flex-1 shadow-xl overflow-hidden">
             <div className="flex items-center gap-2 mb-6">
               <Code className="w-5 h-5 text-red-400" />
-              <h3 className="text-lg font-semibold text-slate-200">Top 10 Complex Files</h3>
+              <h3 className="text-lg font-semibold text-stone-200">Top 10 Complex Files</h3>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-300">
-                <thead className="text-xs uppercase bg-slate-900/50 text-slate-400 border-b border-slate-700">
+              <table className="w-full text-left text-sm text-stone-300">
+                <thead className="text-xs uppercase bg-stone-900/50 text-stone-400 border-b border-stone-700">
                   <tr>
                     <th scope="col" className="px-4 py-3 rounded-tl-lg">File Path</th>
                     <th scope="col" className="px-4 py-3 text-right">Score</th>
@@ -279,7 +279,7 @@ export default function StatisticsModal() {
                 </thead>
                 <tbody>
                   {(statistics.complex_files || []).map((file: any, i: number) => (
-                    <tr key={i} className="border-b border-slate-700/50 last:border-0 hover:bg-slate-700/30 transition-colors">
+                    <tr key={i} className="border-b border-stone-700/50 last:border-0 hover:bg-stone-700/30 transition-colors">
                       <td className="px-4 py-3 font-mono text-xs truncate max-w-[300px]" title={file.file_path}>
                         {file.file_path.split(/[\/\\]/).pop()}
                       </td>
